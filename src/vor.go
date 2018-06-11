@@ -81,4 +81,7 @@ func main() {
 	app.handleMissingEnv()
 	app.handleNoArgs(&cliArgs)
 
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	GitStatus(wg)
 }

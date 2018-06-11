@@ -1,27 +1,14 @@
-package utils
+package util
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
 )
 
-// GetEnv does stuff
-func GetEnv(name string) string {
-	for _, e := range os.Environ() {
-		pair := strings.Split(e, "=")
-		if pair[0] == name {
-			return pair[1]
-		}
-	}
-	return ""
-}
-
-// Trace does stuff
-func Trace() {
+func trace() {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(2, pc)
 	frames := runtime.CallersFrames(pc[:n])
@@ -34,13 +21,11 @@ func Trace() {
 	}
 }
 
-// LoggerError does stuff
-func LoggerError(message string, rest ...interface{}) {
+func loggerError(message string, rest ...interface{}) {
 	fmt.Printf(message, rest...)
 }
 
-// ShellExec does stuff
-func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
+func shellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 	defer wg.Done() // Need to signal to waitgroup that this goroutine is done
 
 	parts := strings.Fields(cmd)
@@ -49,14 +34,23 @@ func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 
 	out, err := exec.Command(head, args...).Output()
 	if err != nil {
-		LoggerError("ERROR: calling exec with '%s'\ncommand failed with %s\n", cmd, err)
-		Trace()
+		loggerError("ERROR: calling exec with '%s'\ncommand failed with %s\n", cmd, err)
+		trace()
 	}
 	result := string(out)
 	return result, err
 }
 
-// LeftPad does stuff
-func LeftPad(s string, padStr string, pLen int) string {
-	return strings.Repeat(padStr, pLen) + s
+func gitStatus(wg *sync.WaitGroup) {
+	res, err := shellExec("/usr/local/bin/hub log", wg)
+	if err != nil {
+		loggerError("Git Status failed, are you in a valid git repository?")
+	}
+	fmt.Println(res)
+}
+
+func main() {
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	gitStatus(wg)
 }
