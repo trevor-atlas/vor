@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/trevor-atlas/vor/src/git"
 	"github.com/trevor-atlas/vor/src/utils"
-	"github.com/trevor-atlas/vor/src/utils/git"
 )
 
 func stashExistingChanges() {
@@ -26,8 +26,8 @@ func stashExistingChanges() {
 
 func createBranch(args []string) {
 	// branchTemplate := "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}"
-	jira := viper.Get("jira-api-key")
-	fmt.Println(jira)
+	jiraKey := viper.Get("VOR_JIRA_API_KEY")
+	fmt.Println(jiraKey)
 
 }
 
@@ -40,7 +40,7 @@ var branch = &cobra.Command{
 	Short: "create a branch for a jira issue",
 	Long:  `creates a git branch for a given jira issue with the default template of {jira-issue-number}/{jira-issue-type}/{jira-issue-title}`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ensureGitAvailability()
+		git.EnsureAvailability()
 		stashExistingChanges()
 		createBranch(args)
 	},

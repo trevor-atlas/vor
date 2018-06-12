@@ -41,8 +41,8 @@ func init() {
 	viper.SetDefault("VOR_IS_DEVELOPMENT_MODE", false)
 	viper.SetDefault("VOR_BRANCH_TEMPLATE", "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
 	viper.SetDefault("VOR_GIT_PATH", "/usr/local/bin/git")
-	viper.SetDefault("JIRA_API_KEY", "")
-	viper.SetDefault("GITHUB_API_KEY", "")
+	viper.SetDefault("VOR_JIRA_API_KEY", "")
+	viper.SetDefault("VOR_GITHUB_API_KEY", "")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -53,7 +53,6 @@ func initConfig() {
 	// Search config in home directory with name "vor" (without extension).
 	viper.SetConfigType("yaml")
 	viper.SetConfigName("vor")
-	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
 	// Don't forget to read config either from cfgFile or from home directory!
 	if cfgFile != "" {
@@ -66,6 +65,7 @@ func initConfig() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		viper.AddConfigPath(home)
 	}
 
 	viper.AutomaticEnv()

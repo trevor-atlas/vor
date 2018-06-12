@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/trevor-atlas/vor/src/cmd"
+	cmd "github.com/trevor-atlas/vor/src/cmd"
 )
 
 func main() {
-	commands.Execute()
+	cmd.Execute()
 }

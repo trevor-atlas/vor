@@ -4,7 +4,8 @@ import (
 	"sync"
 
 	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/src/utils/logger"
+	"github.com/trevor-atlas/vor/src/logger"
+	"github.com/trevor-atlas/vor/src/utils"
 )
 
 func IsGitAvailable() (bool, error) {
@@ -13,15 +14,15 @@ func IsGitAvailable() (bool, error) {
 }
 
 func IsGitRepo() bool {
-	_, err := Call("status")
-	return err != nil
+	_, err := call("status")
+	return err == nil
 }
 
 // EnsureAvailability exits the program if:
 // A. it cannot find git in the local filesystem, or
 // B. you are not in a git repository
 // otherwise it does nothing (noop)
-func EnsureAvailability() {
+func EnsureAvailability() func(command string) {
 	localGit, _ := IsGitAvailable()
 	inRepo := IsGitRepo()
 
@@ -38,8 +39,7 @@ func EnsureAvailability() {
 // you can pass arguments as well E.G:
 // git.Call("branch -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
-func Call(command string) (string, error) {
-	EnsureAvailability()
+func call(command string) (string, error) {
 	localGitPath := viper.GetString("VOR_GIT_PATH")
 	logger.Debug("calling git command " + command)
 	wg := new(sync.WaitGroup)
