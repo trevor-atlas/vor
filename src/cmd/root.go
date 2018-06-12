@@ -55,6 +55,8 @@ func initConfig() {
 	viper.SetConfigType("yaml")
 	viper.SetConfigName("vor")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("../")
+	viper.AddConfigPath("../../")
 	// Don't forget to read config either from cfgFile or from home directory!
 	if cfgFile != "" {
 		// Use config file from the flag.
