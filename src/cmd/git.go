@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/spf13/viper"
 	"fmt"
 	"os"
 	"strings"
@@ -42,6 +43,7 @@ func ensureGitAvailability() {
 }
 
 func callGit(command string) (string, error) {
+	fmt.Println("debug: calling git command " + command)
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 	return utils.ShellExec("/usr/local/bin/git " + command, wg)
@@ -60,7 +62,12 @@ func stashExistingChanges() {
 	}
 }
 
+func createBranch(args []string) {
+	// branchTemplate := "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}"
+	jira := viper.Get("jira-api-key")
+	fmt.Println(jira)
 
+}
 
 // steps for branch:
 // 1. check for existing local git
@@ -73,6 +80,7 @@ var branch = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ensureGitAvailability()
 		stashExistingChanges()
+		createBranch(args)
 	},
 }
 
