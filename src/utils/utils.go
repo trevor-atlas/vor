@@ -7,20 +7,33 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/fatih/color"
 )
 
-// GetEnv does stuff
-func GetEnv(name string) string {
-	for _, e := range os.Environ() {
-		pair := strings.Split(e, "=")
-		if pair[0] == name {
-			return pair[1]
-		}
-	}
-	return ""
+func ExitWithMessage(message string) {
+	color.Red(message + "\ncanceling operation...")
+	os.Exit(1)
 }
 
-// Trace does stuff
+func CaseInsensitiveContains(s, substr string) bool {
+	s, substr = strings.ToUpper(s), strings.ToUpper(substr)
+	return strings.Contains(s, substr)
+}
+
+// Exists returns whether the given file or directory exists or not
+func Exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}
+
+// Trace spits out the current stack trace when called
 func Trace() {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(2, pc)
@@ -30,16 +43,16 @@ func Trace() {
 	for shouldStop != true {
 		frame, more := frames.Next()
 		fmt.Printf("%s:%d %s\n", frame.File, frame.Line, frame.Function)
-			shouldStop = !more
+		shouldStop = !more
 	}
 }
 
-// LoggerError does stuff
+// LoggerError is a centralized utility for logging
 func LoggerError(message string, rest ...interface{}) {
 	fmt.Printf(message, rest...)
 }
 
-// ShellExec does stuff
+// ShellExec attempts to execute a given shell command
 func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 	defer wg.Done() // Need to signal to waitgroup that this goroutine is done
 
@@ -56,7 +69,7 @@ func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 	return result, err
 }
 
-// LeftPad does stuff
+// LeftPad pad s with pLen number of padStr
 func LeftPad(s string, padStr string, pLen int) string {
 	return strings.Repeat(padStr, pLen) + s
 }
