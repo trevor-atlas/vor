@@ -10,6 +10,16 @@ import (
 	"github.com/trevor-atlas/vor/src/utils"
 )
 
+func exitWithMessage(message string) {
+	fmt.Println(message + "\ncanceling operation...")
+	os.Exit(1)
+}
+
+func CaseInsensitiveContains(s, substr string) bool {
+    s, substr = strings.ToUpper(s), strings.ToUpper(substr)
+    return strings.Contains(s, substr)
+}
+
 // exists returns whether the given file or directory exists or not
 func exists(path string) (bool, error) {
     _, err := os.Stat(path)
@@ -24,13 +34,11 @@ func ensureGitAvailability() {
 	if localGit {
 		_, err := callGit("status")
 		if err != nil {
-			utils.LoggerError("Git Status failed, are you in a valid git repository?")
-			os.Exit(1)
+			exitWithMessage("Git Status failed, are you in a valid git repository?")
 		}
 		return
 	}
-	utils.LoggerError("could not find local git at \"/usr/local/bin/git\"")
-	os.Exit(1)
+	exitWithMessage("could not find local git at \"/usr/local/bin/git\"")
 }
 
 func callGit(command string) (string, error) {
@@ -41,17 +49,18 @@ func callGit(command string) (string, error) {
 
 func stashExistingChanges() {
 	cmdOutput, _ := callGit("status")
-	if strings.Contains(cmdOutput, "deleted") || strings.Contains(cmdOutput, "modified") {
+	if CaseInsensitiveContains(cmdOutput, "deleted") || CaseInsensitiveContains(cmdOutput, "modified") {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Println("working directory is not clean. Stash changes? (Y/N)")
 		text , _ := reader.ReadString('\n')
-		if strings.Contains("N", text) {
-			fmt.Println("canceling operation...")
-			os.Exit(1)
+		if CaseInsensitiveContains(text, "N") {
+			exitWithMessage("")
 		}
 		callGit("stash")
 	}
 }
+
+
 
 // steps for branch:
 // 1. check for existing local git
