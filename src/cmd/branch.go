@@ -3,6 +3,7 @@ package commands
 import (
 	"bufio"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,57 @@ import (
 	"github.com/trevor-atlas/vor/src/git"
 	"github.com/trevor-atlas/vor/src/utils"
 )
+
+type jiraUser struct {
+	Active       bool   `json:"active"`
+	TimeZone     string `json:"timeZone"`
+	DisplayName  string `json:"displayName"`
+	Name         string
+	EmailAddress string
+	AvatarUrls   map[string]interface{} `json:"-"`
+	AccountId    string
+	Key          string
+	Self         string
+}
+
+type jiraComment struct {
+	ID           string
+	Self         string
+	Author       jiraUser
+	Body         string
+	UpdateAuthor jiraUser
+	Created      string
+	Updated      string
+	Total        int
+}
+
+type JiraIssue struct {
+	ID     string `json:"id"`
+	Self   string `json:"self"` // url to request this issue
+	Key    string `json:"key"`  // AQ-XXXX
+	Fields struct {
+		Summary           string // title of jira issue
+		Created           string `json:"created"` // 2018-05-25T04:18:06.836-0500
+		Updated           string `json:"updated"` // 2018-06-11T22:23:03.606-0500
+		Description       string // description of Jira issue
+		Customfield_12022 struct {
+			Value string // team name
+		}
+		Reporter jiraUser
+		Assignee jiraUser
+		Comment  struct {
+			Comments []jiraComment
+		}
+		Priority struct {
+			Name string `json:"priority"` // Medium
+		}
+		IssueType struct {
+			Name    string `json:"name"` // Bug, Task, Story
+			Subtask bool   `json:"subtask"`
+			IconURL string `json:"iconUrl"`
+		} `json:"issuetype"`
+	} `json:"fields"`
+}
 
 func stashExistingChanges() {
 	cmdOutput, _ := git.Call("status")
@@ -73,16 +125,39 @@ func createBranch(args []string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		// handle error
+		fmt.Printf("error making request")
+		panic(err)
 	}
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(body)
+	parsed := JiraIssue{}
+
+	parseError := json.Unmarshal(body, &parsed)
+	if parseError != nil {
+		fmt.Printf("error parsing json\n %s", parseError)
+		panic(parseError)
+	}
+	fmt.Println(string(body))
+	fmt.Println(
+		"\n" +
+			parsed.Fields.IssueType.Name + "\n" +
+			parsed.Fields.Summary + "\n" +
+			parsed.Fields.Description)
+	fmt.Println()
+	fmt.Println("comments:\n========================================================")
+	for i := range parsed.Fields.Comment.Comments {
+		comment := parsed.Fields.Comment.Comments[i]
+		fmt.Println(comment.Author.Name)
+		fmt.Println(comment.Body)
+		fmt.Println(`--------------------------------------------------`)
+		fmt.Println()
+	}
 }
 
 func buildJiraURL(args []string) string {
-	projectName := viper.GetString("VOR_PROJECT_NAME")
-	urlParts := []string{"https://", projectName, ".atlassian.net/rest/api/2/issue/", args[0], "?expand=fields"}
+	// projectName := viper.GetString("VOR_PROJECT_NAME")
+	urlParts := []string{"https://", "aquicore", ".atlassian.net/rest/api/2/issue/", args[0], "?expand=fields"}
 	return strings.Join(urlParts, "")
 }
 
@@ -96,7 +171,7 @@ var branch = &cobra.Command{
 	Long:  `creates a git branch for a given jira issue with the default template of {jira-issue-number}/{jira-issue-type}/{jira-issue-title}`,
 	Run: func(cmd *cobra.Command, args []string) {
 		git.EnsureAvailability()
-		stashExistingChanges()
+		// stashExistingChanges()
 		createBranch(args)
 	},
 }
