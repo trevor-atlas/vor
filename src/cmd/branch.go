@@ -38,11 +38,11 @@ func createBranch(args []string) {
 		case "{jira-issue-number}":
 			templateParts[i] = "AQ-XXXX"
 			break
-		case "{jira-issue-type}/":
+		case "{jira-issue-type}":
 			templateParts[i] = "bug"
 			break
 		case "{jira-issue-title}":
-			templateParts[i] = ""
+			templateParts[i] = "some-jira-issue-title"
 		}
 	}
 	fmt.Println(strings.Join(templateParts, ""))
