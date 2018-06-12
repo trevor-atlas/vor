@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
+	// "os"
 
 	color "github.com/fatih/color"
 	"github.com/trevor-atlas/vor/src/utils"
+	cmd "github.com/trevor-atlas/vor/src/cmd"
 )
 
 type App struct {
@@ -54,34 +55,31 @@ func (app *App) handleNoArgs(cliArgs *[]string) {
 }
 
 func main() {
-	app := App{
-		version:     "0.0.1",
-		name:        "Vör",
-		description: "Jira & Git made simple",
-		cmds: [][]string{
-			{"branch", "create a branch for a given jira issue number"},
-			{"pull-request", "create a PR in github with your current branch"},
-			{"issues", "list jira issues assigned to me"},
-			{"issue", "get details for a specific issue number"},
-			{"review", "open github review for a specific issue number"},
-		},
-		requiredEnvs: []string{"JIRA_API_KEY", "GITHUB_API_KEY"},
-		DEFAULTS: defaults{
-			leftPad: 4,
-		},
-	}
+	// app := App{
+	// 	version:     "0.0.1",
+	// 	name:        "Vör",
+	// 	description: "Jira & Git made simple",
+	// 	cmds: [][]string{
+	// 		{"branch", "create a branch for a given jira issue number"},
+	// 		{"pull-request", "create a PR in github with your current branch"},
+	// 		{"issues", "list jira issues assigned to me"},
+	// 		{"issue", "get details for a specific issue number"},
+	// 		{"review", "open github review for a specific issue number"},
+	// 	},
+	// 	requiredEnvs: []string{"JIRA_API_KEY", "GITHUB_API_KEY"},
+	// 	DEFAULTS: defaults{
+	// 		leftPad: 4,
+	// 	},
+	// }
 
 	// `os.Args` provides access to raw command-line
 	// arguments. Note that the first value in this slice
 	// is the path to the program, and `os.Args[1:]`
 	// holds the arguments to the program.
 	// You can get individual args with normal indexing.
-	cliArgs := os.Args[1:]
+	// cliArgs := os.Args[1:]
 
-	app.handleMissingEnv()
-	app.handleNoArgs(&cliArgs)
-
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	GitStatus(wg)
+	// app.handleMissingEnv()
+	// app.handleNoArgs(&cliArgs)
+	cmd.Execute()
 }
