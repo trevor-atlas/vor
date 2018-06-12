@@ -14,7 +14,7 @@ func IsGitAvailable() (bool, error) {
 }
 
 func IsGitRepo() bool {
-	_, err := call("status")
+	_, err := Call("status")
 	return err == nil
 }
 
@@ -22,7 +22,7 @@ func IsGitRepo() bool {
 // A. it cannot find git in the local filesystem, or
 // B. you are not in a git repository
 // otherwise it does nothing (noop)
-func EnsureAvailability() func(command string) {
+func EnsureAvailability() {
 	localGit, _ := IsGitAvailable()
 	inRepo := IsGitRepo()
 
@@ -39,7 +39,7 @@ func EnsureAvailability() func(command string) {
 // you can pass arguments as well E.G:
 // git.Call("branch -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
-func call(command string) (string, error) {
+func Call(command string) (string, error) {
 	localGitPath := viper.GetString("VOR_GIT_PATH")
 	logger.Debug("calling git command " + command)
 	wg := new(sync.WaitGroup)
