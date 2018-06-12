@@ -45,7 +45,7 @@ func createBranch(args []string) {
 			templateParts[i] = "some-jira-issue-title"
 		}
 	}
-	fmt.Println(strings.Join(templateParts, ""))
+	fmt.Println(strings.Join(templateParts, "/"))
 }
 
 // steps for branch:
