@@ -39,7 +39,8 @@ func init() {
 
 	// Default environment configs
 	viper.SetDefault("VOR_IS_DEVELOPMENT_MODE", false)
-	viper.SetDefault("VOR_BRANCH_TEMPLATE", "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
+	viper.SetDefault("VOR_BRANCH_TEMPLATE", "{project-name}/{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
+	viper.SetDefault("VOR_PROJECT_NAME", "")
 	viper.SetDefault("VOR_GIT_PATH", "/usr/local/bin/git")
 	viper.SetDefault("VOR_JIRA_API_KEY", "")
 	viper.SetDefault("VOR_GITHUB_API_KEY", "")

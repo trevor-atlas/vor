@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,10 +26,26 @@ func stashExistingChanges() {
 }
 
 func createBranch(args []string) {
-	// branchTemplate := "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}"
-	jiraKey := viper.Get("VOR_JIRA_API_KEY")
-	fmt.Println(jiraKey)
-
+	// jiraKey := viper.GetString("VOR_JIRA_API_KEY")
+	branchTemplate := viper.GetString("VOR_BRANCH_TEMPLATE")
+	projectName := viper.GetString("VOR_PROJECT_NAME")
+	templateParts := strings.Split(branchTemplate, "/")
+	for i := range templateParts {
+		switch templateParts[i] {
+		case "{project-name}":
+			templateParts[i] = projectName
+			break
+		case "{jira-issue-number}":
+			templateParts[i] = "AQ-XXXX"
+			break
+		case "{jira-issue-type}/":
+			templateParts[i] = "bug"
+			break
+		case "{jira-issue-title}":
+			templateParts[i] = ""
+		}
+	}
+	fmt.Println(strings.Join(templateParts, ""))
 }
 
 // steps for branch:
