@@ -1,13 +1,15 @@
 package logger
 
 import (
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 )
 
-func Debug(message string) {
-	isDev := viper.GetBool("VOR_IS_DEVELOPMENT_MODE")
+func Debug(message ...interface{}) {
+	isDev := viper.GetBool("devmode")
 	if isDev {
-		color.Cyan("dev: " + message)
+		color.Cyan("DEBUG:")
+		fmt.Println(message)
 	}
 }
