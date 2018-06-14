@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,8 +9,35 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/spf13/viper"
+
 	"github.com/fatih/color"
 )
+
+func KebabCase(s string) string {
+	return strings.Replace(s, " ", "-", -1)
+}
+
+func LowerKebabCase(s string) string {
+	return strings.ToLower(KebabCase(s))
+}
+
+// GetStringEnv get a specific env and fallback to the global env if it does not exist locally
+func GetStringEnv(specificEnv string) string {
+	env := viper.GetString(specificEnv)
+	// if env == "" {
+	// env = viper.GetString("global."+ specificEnv)
+	// }
+	return env
+}
+
+// PromptYesNo prompt the user with {message} (Y/N) and return true for Y, false for N (case insensitive)
+func PromptYesNo(message string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println(message + " (Y/N)")
+	text, _ := reader.ReadString('\n')
+	return CaseInsensitiveContains(text, "N")
+}
 
 func ExitWithMessage(message string) {
 	color.Red(message + "\ncanceling operation...")

@@ -3,6 +3,9 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/fatih/color"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -30,12 +33,29 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vor)")
-	rootCmd.PersistentFlags().StringP("author", "", "<EMAIL ADDRESS>", "Author name for commit attribution")
-	rootCmd.PersistentFlags().Bool("viper", true, "Use Viper for configuration")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vor.yaml, or the current directory)")
+
+	// Default environment configs
+	viper.SetDefault("devmode", false)
+	viper.SetDefault("global.branchtemplate", "{projectname}/{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
+	viper.SetDefault("branchtemplate", "")
+	viper.SetDefault("projectname", "")
+	viper.SetDefault("global.jira.orgname", "")
+	viper.SetDefault("jira.orgname", "")
+	viper.SetDefault("global.jira.apikey", "")
+	viper.SetDefault("global.jira.username", "")
+	viper.SetDefault("jira.username", "")
+	viper.SetDefault("jira.apikey", "")
+	viper.SetDefault("global.github.apikey", "")
+	viper.SetDefault("github.apikey", "")
+	viper.SetDefault("global.git.path", "/usr/local/bin/git")
+	viper.SetDefault("git.path", "")
 
 	// Default environment configs
 	viper.SetDefault("VOR_IS_DEVELOPMENT_MODE", false)
@@ -54,7 +74,7 @@ func init() {
 func initConfig() {
 	// Search config in home directory with name "vor" (without extension).
 	viper.SetConfigType("yaml")
-	viper.SetConfigName("vor")
+	viper.SetConfigName(".vor")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("../")
 	viper.AddConfigPath("../../")
@@ -72,10 +92,9 @@ func initConfig() {
 		viper.AddConfigPath(home)
 	}
 
-	viper.AutomaticEnv()
-
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Can't read config:", err)
-		os.Exit(1)
+		color.Red("Vor could not find a local config file, this can cause problems and is not recommended\n")
+		fmt.Println(err)
+		// os.Exit(1)
 	}
 }

@@ -3,13 +3,12 @@ package git
 import (
 	"sync"
 
-	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/src/logger"
 	"github.com/trevor-atlas/vor/src/utils"
 )
 
 func IsGitAvailable() (bool, error) {
-	localGitPath := viper.GetString("VOR_GIT_PATH")
+	localGitPath := utils.GetStringEnv("git.path")
 	return utils.Exists(localGitPath)
 }
 
@@ -40,8 +39,8 @@ func EnsureAvailability() {
 // git.Call("branch -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
 func Call(command string) (string, error) {
-	localGitPath := viper.GetString("VOR_GIT_PATH")
-	logger.Debug("calling git command " + command)
+	localGitPath := utils.GetStringEnv("git.path")
+	logger.Debug("calling git command " + command + " git path is: \"" + localGitPath + "\"")
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 	return utils.ShellExec(localGitPath+" "+command, wg)
