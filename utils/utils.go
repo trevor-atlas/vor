@@ -15,11 +15,21 @@ import (
 	"github.com/trevor-atlas/vor/logger"
 )
 
+
+func PadOutput(padding int) func(string) string {
+	return func(str string) string {
+		return LeftPad(str, " ", padding)
+	}
+}
+
+
 func KebabCase(s string) string {
 	r := strings.NewReplacer(
 " ", "-",
 		":", "",
-		"/", "-")
+		"/", "-",
+		"\n", "",
+		"	", "-")
 	return r.Replace(s)
 }
 
@@ -100,4 +110,9 @@ func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 // LeftPad pad s with pLen number of padStr
 func LeftPad(s string, padStr string, pLen int) string {
 	return strings.Repeat(padStr, pLen) + s
+}
+
+// RightPad pad s with pLen number of padStr
+func RightPad(s string, padStr string, pLen int) string {
+	return s + strings.Repeat(padStr, pLen)
 }

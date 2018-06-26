@@ -17,41 +17,51 @@ func basicAuth(username, password string) string {
 	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
-func redirectPolicyFunc(req *http.Request, via []*http.Request) error {
-	req.Header.Add("Authorization", "Basic "+basicAuth("username1", "password123"))
+func redirectHandler(req *http.Request, via []*http.Request) error {
+	jiraUsername := utils.GetStringEnv("jira.username")
+	jiraKey := utils.GetStringEnv("jira.apikey")
+	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
 	return nil
 }
 
-func padOutput(padding int) func(string) string {
-	return func(str string) string {
-		return utils.LeftPad(str, " ", padding)
+func formatMultiline(message string, formatter func(string) string) string {
+	maxLen := 120
+	var b strings.Builder
+	for _, line := range strings.Split(message, "\n") {
+		if len(line) > maxLen && strings.Contains(line, ". ") {
+			for _, str := range strings.SplitAfter(line, ". ") {
+				b.WriteString(formatter(str) + "\n")
+			}
+		} else if len(line) > maxLen {
+			b.WriteString(formatter(line[0:maxLen]) + "\n")
+			b.WriteString(formatter(line[maxLen:]) + "\n")
+		} else {
+			b.WriteString(formatter(line) + "\n")
+		}
 	}
+	return strings.Trim(b.String(), "\n")
 }
 
 func PrintIssue(issue JiraIssue) {
-	pad := padOutput(4)
-	var formatted string
-	for _, line := range strings.Split(issue.Fields.Description, "\n") {
-		formatted += pad(line) + "\n"
-	}
-	fmt.Println(
-		"//////////////////////////////////////////////////////////////////\n" +
-			pad(issue.Fields.IssueType.Name+" – created on: "+issue.Fields.Created+"\n") +
-			"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" + "\n" +
-			pad(issue.Fields.Summary+"\n") +
-			formatted)
+	var b strings.Builder
+	w := b.WriteString
+	divider := "\n--------------------------------\n"
+	pad := utils.PadOutput(4)
+
+	w(issue.Fields.IssueType.Name + "\n")
+	w(divider + "Title: " +issue.Fields.Summary+"\n")
+	w("Description: "+formatMultiline(issue.Fields.Description, pad) + "\n")
+	w("created on: "+ issue.Fields.Created + "\n")
 
 	if len(issue.Fields.Comment.Comments) > 0 {
-		fmt.Println(
-			"//////////////////////////////////////////////////////////////////\n" +
-				pad("COMMENTS:\n") +
-				"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" + "\n")
+		w("Comments:" + divider)
 		for _, comment := range issue.Fields.Comment.Comments {
-			fmt.Println(pad(comment.Author.Name))
-			fmt.Println(pad(comment.Body))
-			fmt.Println()
+			w(pad("Author: " + comment.Author.Name + "\n"))
+			w(formatMultiline("\"" +comment.Body+ "\"", pad))
+			w(divider)
 		}
 	}
+	fmt.Println(b.String())
 }
 
 func GetJiraIssue(issueNumber string) JiraIssue {
@@ -65,7 +75,7 @@ func GetJiraIssue(issueNumber string) JiraIssue {
 	logger.Debug("built jira url: " + url)
 
 	client := &http.Client{
-		CheckRedirect: redirectPolicyFunc,
+		CheckRedirect: redirectHandler,
 	}
 
 	req, err := http.NewRequest("GET", url, nil)

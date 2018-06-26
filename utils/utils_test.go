@@ -66,6 +66,14 @@ func TestLeftPad(t *testing.T) {
 	}
 }
 
+func TestRightPad(t *testing.T) {
+	result := RightPad("GONNA PAD YA", " B", 2)
+	expected := "GONNA PAD YA B B"
+	if result != expected {
+		t.Errorf("RightPad was incorrect:\ngot: %s\nwant: %s", result, expected)
+	}
+}
+
 func TestGetStringEnv(t *testing.T) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
