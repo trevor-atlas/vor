@@ -73,10 +73,6 @@ func createBranch(args []string) {
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 }
 
-// steps for branch:
-// 1. check for existing local git
-// 2. stash changes if they exist
-// 3. get JIRA info for ticket, create branch
 var branch = &cobra.Command{
 	Use:   "branch",
 	Short: "create a branch for a jira issue",
@@ -89,8 +85,6 @@ var branch = &cobra.Command{
 		git.EnsureAvailability()
 		stashExistingChanges()
 		createBranch(args)
-		// issues := jira.GetIssues()
-		// jira.PrintIssues(issues)
 	},
 }
 
