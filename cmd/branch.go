@@ -38,15 +38,15 @@ func generateBranchName(issue jira.JiraIssue) string {
 			templateParts[i] = issue.Key
 			break
 		case "{jira-issue-type}":
-			templateParts[i] = issue.Fields.IssueType.Name
+			templateParts[i] = utils.LowerKebabCase(issue.Fields.IssueType.Name)
 			break
 		case "{jira-issue-title}":
-			templateParts[i] = issue.Fields.Summary
+			templateParts[i] = utils.LowerKebabCase(issue.Fields.Summary)
 			break
 		}
 	}
 
-	branchName := utils.LowerKebabCase(strings.Join(templateParts, "/"))
+	branchName := strings.Join(templateParts, "/")
 	logger.Debug("build branch name: " + branchName)
 	return branchName
 }
