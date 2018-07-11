@@ -67,8 +67,8 @@ func createBranch(args []string) {
 			return
 		}
 	}
-	fmt.Println("checked out new local branch: '" + newBranchName + "'")
 	git.Call("checkout -b " + newBranchName)
+	fmt.Println("checked out new local branch: '" + newBranchName + "'")
 }
 
 // steps for branch:
