@@ -51,7 +51,8 @@ func PromptYesNo(message string) bool {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println(message + " (Y/N)")
 	text, _ := reader.ReadString('\n')
-	return CaseInsensitiveContains(text, "N")
+	logger.Debug("text:" + text)
+	return !CaseInsensitiveContains(text, "N")
 }
 
 func ExitWithMessage(message string) {

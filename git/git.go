@@ -40,7 +40,7 @@ func EnsureAvailability() {
 // returns the text output of the command and a standard error (if any)
 func Call(command string) (string, error) {
 	localGitPath := utils.GetStringEnv("git.path")
-	logger.Debug("calling git command " + command + " git path is: \"" + localGitPath + "\"")
+	logger.Debug("calling git command " + command)
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 	return utils.ShellExec(localGitPath+" "+command, wg)
