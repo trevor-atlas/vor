@@ -86,6 +86,8 @@ var branch = &cobra.Command{
 		git.EnsureAvailability()
 		stashExistingChanges()
 		createBranch(args)
+		// issues := jira.GetIssues()
+		// jira.PrintIssues(issues)
 	},
 }
 
