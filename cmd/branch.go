@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/fatih/color"
 	"fmt"
 	"strings"
 
@@ -56,6 +57,7 @@ func createBranch(args []string) {
 	newBranchName := generateBranchName(issue)
 	fmt.Println(newBranchName)
 	localBranches, _ := git.Call("branch")
+	cyan := color.New(color.FgHiCyan).SprintFunc()
 	replacer := strings.NewReplacer(
 		" ", "",
 		"\r", "",
@@ -68,7 +70,7 @@ func createBranch(args []string) {
 		}
 	}
 	git.Call("checkout -b " + newBranchName)
-	fmt.Println("checked out new local branch: '" + newBranchName + "'")
+	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 }
 
 // steps for branch:
