@@ -33,11 +33,11 @@ type JiraIssue struct {
 		Created           string `json:"created"` // 2018-05-25T04:18:06.836-0500
 		Updated           string `json:"updated"` // 2018-06-11T22:23:03.606-0500
 		Description       string // description of Jira issue
+		Reporter jiraUser
+		Assignee jiraUser
 		Customfield_12022 struct {
 			Value string // team name
 		}
-		Reporter jiraUser
-		Assignee jiraUser
 		Comment  struct {
 			Comments []jiraComment
 		}
@@ -49,5 +49,21 @@ type JiraIssue struct {
 			Subtask bool   `json:"subtask"`
 			IconURL string `json:"iconUrl"`
 		}
+		Status struct {
+			Description string
+			Name string
+			StatusCategory struct {
+				Key string
+				Name string
+			}
+		}
+		Project struct {
+			Key string
+			Name string
+		}
 	} `json:"fields"`
+}
+
+type JiraIssues struct {
+	Issues []JiraIssue
 }

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/utils"
 )
 
@@ -49,40 +48,63 @@ func PrintIssue(issue JiraIssue) {
 	pad := utils.PadOutput(4)
 
 	w(issue.Fields.IssueType.Name + "\n")
-	w(divider + "Title: " +issue.Fields.Summary+"\n")
-	w("Description: "+formatMultiline(issue.Fields.Description, pad) + "\n")
-	w("created on: "+ issue.Fields.Created + "\n")
+	w(divider + "Title: " + issue.Fields.Summary + "\n")
+	w("Description: " + formatMultiline(issue.Fields.Description, pad) + "\n")
+	w("created on: " + issue.Fields.Created + "\n")
 
 	if len(issue.Fields.Comment.Comments) > 0 {
 		w("Comments:" + divider)
 		for _, comment := range issue.Fields.Comment.Comments {
 			w(pad("Author: " + comment.Author.Name + "\n"))
-			w(formatMultiline("\"" +comment.Body+ "\"", pad))
+			w(formatMultiline("\""+comment.Body+"\"", pad))
 			w(divider)
 		}
 	}
 	fmt.Println(b.String())
 }
 
-func GetJiraIssue(issueNumber string) JiraIssue {
+func Get(url string) (*http.Response, error) {
 	jiraUsername := utils.GetStringEnv("jira.username")
 	jiraKey := utils.GetStringEnv("jira.apikey")
-	orgName := utils.GetStringEnv("jira.orgname")
-	logger.Debug("jira username: " + jiraUsername)
-	logger.Debug("jirakey: " + jiraKey)
-	logger.Debug("orgname: " + orgName)
-	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
-	logger.Debug("built jira url: " + url)
 
 	client := &http.Client{
 		CheckRedirect: redirectHandler,
 	}
-
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
 
 	resp, err := client.Do(req)
+	return resp, err
+}
+
+func GetIssues() JiraIssues {
+	orgName := utils.GetStringEnv("jira.orgname")
+	url := "https://" + orgName + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()&expand=fields"
+
+	resp, err := Get(url)
+	if err != nil {
+		fmt.Printf("error making request")
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	parsed := JiraIssues{}
+
+	parseError := json.Unmarshal(body, &parsed)
+	if parseError != nil {
+		fmt.Printf("error parsing json\n %s", parseError)
+		panic(parseError)
+	}
+	return parsed
+}
+
+func GetIssue(issueNumber string) JiraIssue {
+	orgName := utils.GetStringEnv("jira.orgname")
+	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
+
+	resp, err := Get(url)
 	if err != nil {
 		fmt.Printf("error making request")
 		panic(err)
