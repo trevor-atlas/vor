@@ -36,7 +36,7 @@ func EnsureAvailability() {
 
 // Call – call a git command by name
 // you can pass arguments as well E.G:
-// git.Call("branch -b my-branch-name")
+// git.Call("checkout -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
 func Call(command string) (string, error) {
 	localGitPath := utils.GetStringEnv("git.path")

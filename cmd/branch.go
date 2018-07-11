@@ -55,7 +55,7 @@ func createBranch(args []string) {
 	issue := jira.GetIssue(args[0])
 	branchName := generateBranchName(issue)
 	fmt.Println(branchName)
-	git.Call("branch -b " + branchName)
+	git.Call("checkout -b " + branchName)
 }
 
 // steps for branch:
