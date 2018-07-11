@@ -55,7 +55,7 @@ func createBranch(args []string) {
 	issue := jira.GetIssue(args[0])
 	branchName := generateBranchName(issue)
 	fmt.Println(branchName)
-	jira.PrintIssue(issue)
+	git.Call("branch -b " + branchName)
 }
 
 // steps for branch:
@@ -72,11 +72,8 @@ var branch = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		git.EnsureAvailability()
-		// stashExistingChanges()
-		// createBranch(args)
-
-		thing := jira.GetIssues()
-		fmt.Println(thing)
+		stashExistingChanges()
+		createBranch(args)
 	},
 }
 
