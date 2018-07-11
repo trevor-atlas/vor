@@ -53,9 +53,21 @@ func generateBranchName(issue jira.JiraIssue) string {
 func createBranch(args []string) {
 	logger.Debug("cli args: ", args)
 	issue := jira.GetIssue(args[0])
-	branchName := generateBranchName(issue)
-	fmt.Println(branchName)
-	git.Call("checkout -b " + branchName)
+	newBranchName := generateBranchName(issue)
+	fmt.Println(newBranchName)
+	localBranches, _ := git.Call("branch")
+	replacer := strings.NewReplacer(
+		" ", "",
+		"\r", "",
+		"\n", "")
+	for _, branch := range strings.Split(localBranches, "\n") {
+		if replacer.Replace(branch) == newBranchName {
+			git.Call("checkout " + branch)
+			fmt.Println("checked out existing local branch " + branch)
+			return
+		}
+	}
+	git.Call("checkout -b " + newBranchName)
 }
 
 // steps for branch:
