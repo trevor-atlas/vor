@@ -55,6 +55,7 @@ type JiraIssue struct {
 			StatusCategory struct {
 				Key string
 				Name string
+				ID int
 			}
 		}
 		Project struct {

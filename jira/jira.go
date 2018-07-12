@@ -1,6 +1,8 @@
 package jira
 
 import (
+	"os"
+	"text/tabwriter"
 	"github.com/fatih/color"
 	"encoding/base64"
 	"encoding/json"
@@ -44,56 +46,47 @@ func formatMultiline(message string, formatter func(string) string) string {
 
 func PrintIssues(issues JiraIssues) {
 	orgName := utils.GetStringEnv("jira.orgname")
-	var b strings.Builder
-	w := b.WriteString
+	// var builder strings.Builder
+	// b := builder.WriteString
 	divider := "\n--------------------------------\n"
-	pad := utils.PadOutput(2)
+	// pad := utils.PadOutput(2)
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	// red := color.New(color.FgHiRed).SprintFunc()
 
 	issueURL := "" + orgName + ".atlassian.net/browse/"
 
-	var todo []JiraIssue
-	var inProgress []JiraIssue
-	var done []JiraIssue
+	col1 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 1})
+	col2 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 2})
+	col3 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 3})
+	col4 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 4})
 
-	for _, issue := range issues.Issues {
-		if issue.Fields.Status.StatusCategory.Name == "To Do" {
-			todo = append(todo, issue)
+	columns := [][]JiraIssue{col1, col2, col3, col4}
+
+	header := cyan("Issue No.") + "\t" + cyan("Issue Type") + "\t" + cyan("URL")
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 12, 8, 2, '\t', '|')
+
+	for _, column := range columns {
+		if column == nil || len(column) < 1 {continue}
+		fmt.Println()
+		fmt.Print(cyan(column[0].Fields.Status.StatusCategory.Name))
+		fmt.Println(divider)
+		fmt.Fprintln(w, header)
+		fmt.Fprintln(w)
+		for _, issue := range column {
+			fmt.Fprintln(w,
+				issue.Key + "\t" +
+				issue.Fields.IssueType.Name + "\t" +
+				issueURL + issue.Key)
+			fmt.Fprintln(w)
+			fmt.Fprintln(w, issue.Fields.Summary)
+			fmt.Fprintln(w, issue.Fields.Summary)
+			fmt.Fprintln(w)
+
+			// fmt.Println(issue.Fields.Summary)
 		}
-		if issue.Fields.Status.StatusCategory.Name == "In Progress" {
-			inProgress = append(inProgress, issue)
-		}
-		if issue.Fields.Status.StatusCategory.Name == "Done" {
-			done = append(done, issue)
-		}
+		w.Flush()
 	}
-
-	sortedIssues := append(todo, inProgress...)
-	sortedIssues = append(sortedIssues, done...)
-
-	var issueColumn string
-	var alreadyPrintedColumn bool
-
-	for _, issue := range sortedIssues{
-		// issueLabel := issue.Fields.IssueType.Name
-		if issueColumn == "" || issueColumn != issue.Fields.Status.StatusCategory.Name {
-			issueColumn = issue.Fields.Status.StatusCategory.Name
-			alreadyPrintedColumn = false
-		}
-
-		if issueColumn == issue.Fields.Status.StatusCategory.Name && !alreadyPrintedColumn {
-			w("\n")
-			w(cyan(issueColumn))
-			w(divider)
-			alreadyPrintedColumn = true
-		}
-		w(cyan(issue.Key) + " " + issueURL + issue.Key + "\n")
-		w(pad(issue.Fields.Summary))
-		w("\n\n")
-	}
-
-	fmt.Println(b.String())
 }
 
 func PrintIssue(issue JiraIssue) {
@@ -175,4 +168,14 @@ func GetIssue(issueNumber string) JiraIssue {
 		panic(parseError)
 	}
 	return parsed
+}
+
+func Filter(vs []JiraIssue, f func(JiraIssue) bool) []JiraIssue {
+    vsf := make([]JiraIssue, 0)
+    for _, v := range vs {
+        if f(v) {
+            vsf = append(vsf, v)
+        }
+    }
+    return vsf
 }
