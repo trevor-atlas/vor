@@ -17,7 +17,20 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "vor",
 	Short: "Vör – make Github and Jira easy",
-	Long:  `Vör is a fast and flexible commandline tool for working with Github and Jira`,
+	Long:  `
+                  ___          ___
+      ___        /\  \        /\  \
+     /\  \      /::\  \      /::\  \
+     \:\  \    /:/\:\  \    /:/\:\__\
+      \:\  \  /:/  \:\  \  /:/ /:/  /
+  ___  \:\__\/:/__/ \:\__\/:/_/:/__/___
+ /\  \ |:|  |\:\  \ /:/  /\:\/:::::/  /
+ \:\  \|:|  | \:\  /:/  /  \::/~~/~~~~
+  \:\__|:|__|  \:\/:/  /    \:\~~\
+   \::::/__/    \::/  /      \:\__\
+    ~~~~         \/__/        \/__/
+
+ Vör – A fast and flexible commandline tool for working with Github and Jira`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {},

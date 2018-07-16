@@ -1,15 +1,15 @@
 package jira
 
 import (
-	"os"
-	"text/tabwriter"
-	"github.com/fatih/color"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/trevor-atlas/vor/utils"
 )
@@ -52,35 +52,44 @@ func PrintIssues(issues JiraIssues) {
 	// pad := utils.PadOutput(2)
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	// red := color.New(color.FgHiRed).SprintFunc()
-
 	issueURL := "" + orgName + ".atlassian.net/browse/"
+	toDo := []JiraIssue{}
+	inProg := []JiraIssue{}
+	review := []JiraIssue{}
+	verify := []JiraIssue{}
 
-	col1 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 1})
-	col2 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 2})
-	col3 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 3})
-	col4 := Filter(issues.Issues, func (issue JiraIssue) bool { return issue.Fields.Status.StatusCategory.ID == 4})
+	for _, issue := range issues.Issues {
+		switch issue.Fields.Status.Name {
+		case "To Do":
+			toDo = append(toDo, issue)
+		case "In Progress":
+			inProg = append(inProg, issue)
+		case "Review":
+			review = append(review, issue)
+		case "Verification":
+			verify = append(verify, issue)
+		default: continue
+		}
+	}
 
-	columns := [][]JiraIssue{col1, col2, col3, col4}
-
-	header := cyan("Issue No.") + "\t" + cyan("Issue Type") + "\t" + cyan("URL")
+	columns := [][]JiraIssue{toDo, inProg, review, verify}
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 12, 8, 2, '\t', '|')
+	w.Init(os.Stdout, 12, 8, 2, '\t', ' ')
 
 	for _, column := range columns {
-		if column == nil || len(column) < 1 {continue}
+		if column == nil || len(column) < 1 {
+			continue
+		}
 		fmt.Println()
 		fmt.Print(cyan(column[0].Fields.Status.StatusCategory.Name))
 		fmt.Println(divider)
-		fmt.Fprintln(w, header)
+		fmt.Fprintln(w, cyan("Issue No.") + "\t " + cyan("Issue Type") + "\t " + cyan("URL"))
 		fmt.Fprintln(w)
 		for _, issue := range column {
 			fmt.Fprintln(w,
-				issue.Key + "\t" +
-				issue.Fields.IssueType.Name + "\t" +
-				issueURL + issue.Key)
-			fmt.Fprintln(w)
-			fmt.Fprintln(w, issue.Fields.Summary)
-			fmt.Fprintln(w, issue.Fields.Summary)
+				issue.Key + "\t "+
+				issue.Fields.IssueType.Name + "\t "+
+				issueURL+issue.Key)
 			fmt.Fprintln(w)
 
 			// fmt.Println(issue.Fields.Summary)
@@ -128,7 +137,7 @@ func Get(url string) (*http.Response, error) {
 
 func GetIssues() JiraIssues {
 	orgName := utils.GetStringEnv("jira.orgname")
-	url := "https://" + orgName + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()&expand=fields"
+	url := "https://" + orgName + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
 
 	resp, err := Get(url)
 	if err != nil {
@@ -171,11 +180,11 @@ func GetIssue(issueNumber string) JiraIssue {
 }
 
 func Filter(vs []JiraIssue, f func(JiraIssue) bool) []JiraIssue {
-    vsf := make([]JiraIssue, 0)
-    for _, v := range vs {
-        if f(v) {
-            vsf = append(vsf, v)
-        }
-    }
-    return vsf
+	vsf := make([]JiraIssue, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
 }

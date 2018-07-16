@@ -10,18 +10,15 @@ import (
 	"sync"
 
 	"github.com/spf13/viper"
-
 	"github.com/fatih/color"
 	"github.com/trevor-atlas/vor/logger"
 )
-
 
 func PadOutput(padding int) func(string) string {
 	return func(str string) string {
 		return LeftPad(str, " ", padding)
 	}
 }
-
 
 func KebabCase(s string) string {
 	r := strings.NewReplacer(
