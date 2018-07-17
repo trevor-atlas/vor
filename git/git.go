@@ -40,8 +40,19 @@ func EnsureAvailability() {
 // returns the text output of the command and a standard error (if any)
 func Call(command string) (string, error) {
 	localGitPath := utils.GetStringEnv("git.path")
-	logger.Debug("calling git command " + command)
+	logger.Debug("calling 'git " + command + "'")
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 	return utils.ShellExec(localGitPath+" "+command, wg)
+}
+
+func StashExistingChanges() {
+	cmdOutput, _ := Call("status")
+	if utils.CaseInsensitiveContains(cmdOutput, "deleted") || utils.CaseInsensitiveContains(cmdOutput, "modified") {
+		affirmed := utils.Confirm("Working directory is not clean. Stash changes?")
+		if !affirmed {
+			utils.ExitWithMessage("")
+		}
+		Call("stash")
+	}
 }

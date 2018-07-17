@@ -56,28 +56,31 @@ func init() {
 
 	// Default environment configs
 	viper.SetDefault("devmode", false)
+
 	viper.SetDefault("global.branchtemplate", "{projectname}/{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
 	viper.SetDefault("branchtemplate", "")
+
 	viper.SetDefault("projectname", "")
+
 	viper.SetDefault("global.jira.orgname", "")
 	viper.SetDefault("jira.orgname", "")
+
 	viper.SetDefault("global.jira.apikey", "")
 	viper.SetDefault("global.jira.username", "")
+
 	viper.SetDefault("jira.username", "")
 	viper.SetDefault("jira.apikey", "")
+
 	viper.SetDefault("global.github.apikey", "")
 	viper.SetDefault("github.apikey", "")
+
+	viper.SetDefault("github.owner", "")
+
 	viper.SetDefault("global.git.path", "/usr/local/bin/git")
 	viper.SetDefault("git.path", "")
 
-	// Default environment configs
-	viper.SetDefault("VOR_IS_DEVELOPMENT_MODE", false)
-	viper.SetDefault("VOR_BRANCH_TEMPLATE", "{project-name}/{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
-	viper.SetDefault("VOR_PROJECT_NAME", "vor-project")
-	viper.SetDefault("VOR_GIT_PATH", "/usr/local/bin/git")
-	viper.SetDefault("VOR_JIRA_PROJECT_NAME", "")
-	viper.SetDefault("VOR_JIRA_API_KEY", "")
-	viper.SetDefault("VOR_GITHUB_API_KEY", "")
+	viper.SetDefault("global.git.pull-request-base", "master")
+	viper.SetDefault("git.pull-request-base", "")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -85,7 +88,7 @@ func init() {
 }
 
 func initConfig() {
-	// Search config in home directory with name "vor" (without extension).
+	// Search config in home directory with name ".vor"
 	viper.SetConfigType("yaml")
 	viper.SetConfigName(".vor")
 	viper.AddConfigPath(".")

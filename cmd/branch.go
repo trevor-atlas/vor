@@ -13,17 +13,6 @@ import (
 	"github.com/trevor-atlas/vor/utils"
 )
 
-func stashExistingChanges() {
-	cmdOutput, _ := git.Call("status")
-	if utils.CaseInsensitiveContains(cmdOutput, "deleted") || utils.CaseInsensitiveContains(cmdOutput, "modified") {
-		affirmed := utils.PromptYesNo("Working directory is not clean. Stash changes?")
-		if !affirmed {
-			utils.ExitWithMessage("")
-		}
-		git.Call("stash")
-	}
-}
-
 func generateBranchName(issue jira.JiraIssue) string {
 	branchTemplate := utils.GetStringEnv("branchtemplate")
 	projectName := utils.GetStringEnv("projectname")
@@ -83,7 +72,7 @@ var branch = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		git.EnsureAvailability()
-		stashExistingChanges()
+		git.StashExistingChanges()
 		createBranch(args)
 	},
 }

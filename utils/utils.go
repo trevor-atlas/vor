@@ -43,12 +43,12 @@ func GetStringEnv(specificEnv string) string {
 	return env
 }
 
-// PromptYesNo prompt the user with {message} (Y/N) and return true for Y, false for N (case insensitive)
-func PromptYesNo(message string) bool {
+// Confirm prompt the user with {message} (Y/N) and return true for Y, false for N (case insensitive)
+func Confirm(message string) bool {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(message + " (Y/N)")
+	fmt.Println(message + " [Y/N]")
 	text, _ := reader.ReadString('\n')
-	return CaseInsensitiveContains(text, "Y")
+	return CaseInsensitiveContains(text, "Y") || CaseInsensitiveContains(text, "yes")
 }
 
 func ExitWithMessage(message string) {
