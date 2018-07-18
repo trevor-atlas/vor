@@ -55,10 +55,10 @@ var pullRequest = &cobra.Command{
 			body string
 			head string
 			base string}{
-			"something",
-			"a body",
-			"master",
-			base,
+				title: "something",
+				body: "a body",
+				head: "vor:test",
+				base: base,
 		})
 		  git.Post("https://api.github.com/repos/"+owner+"/"+repo+"/pulls", b)
 	},
