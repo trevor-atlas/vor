@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/trevor-atlas/vor/utils"
 	"github.com/trevor-atlas/vor/logger"
@@ -16,10 +17,10 @@ var pullRequest = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		git.EnsureAvailability()
 		base := utils.GetStringEnv("git.pull-request-base")
-		// githubAPIKey := utils.GetStringEnv("github.apikey")
-		// if githubAPIKey == "" {
-			// utils.ExitWithMessage("No github API key found in vor config (github.apikey)")
-		// }
+		githubAPIKey := utils.GetStringEnv("github.apikey")
+		if githubAPIKey == "" {
+			utils.ExitWithMessage("No github API key found in vor config (github.apikey)")
+		}
 		remotes, err := git.Call("remote -v")
 		if err != nil {
 			fmt.Println("err", err)
@@ -29,19 +30,37 @@ var pullRequest = &cobra.Command{
 		origin	https://github.com/owner/project.git (fetch)
 		origin	https://github.com/owner/project.git (push)
 		*/
-		re, _ := regexp.Compile(`github.com\/(.*)\/.*`)
-		res := re.FindAllStringSubmatch(remotes, 1)
+		re, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
+		res := re.FindAllStringSubmatch(remotes, 1)[0]
 		fmt.Println(res)
-		owner := res[0][1]
+		owner := res[1]
+		repo := res[2]
 
 		if base == "" {
 			fmt.Println("Repository base not found in config, falling back to origin/master...")
 			base = "master"
 		}
 		logger.Debug("git remote owner: " + owner + ", base: " + base)
-		// git.StashExistingChanges()
-
-
+		git.StashExistingChanges()
+		git.Call("push -u")
+		// POST /repos/:owner/:repo/pulls
+		// {
+		// 	"title": "Amazing new feature",
+		// 	"body": "Please pull this in!",
+		// 	"head": "octocat:new-feature",
+		// 	"base": "master"
+		//   }
+		b, err := json.Marshal(struct{
+			title string
+			body string
+			head string
+			base string}{
+			"something",
+			"a body",
+			"master",
+			base,
+		})
+		  git.Post("/repos/"+owner+"/"+repo+"/pulls", b)
 	},
 }
 
