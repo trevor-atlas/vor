@@ -60,7 +60,7 @@ var pullRequest = &cobra.Command{
 			"master",
 			base,
 		})
-		  git.Post("/repos/"+owner+"/"+repo+"/pulls", b)
+		  git.Post("https://github.com/repos/"+owner+"/"+repo+"/pulls", b)
 	},
 }
 
