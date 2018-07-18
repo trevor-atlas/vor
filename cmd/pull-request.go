@@ -51,14 +51,14 @@ var pullRequest = &cobra.Command{
 		// 	"base": "master"
 		//   }
 		b, err := json.Marshal(struct{
-			title string
-			body string
-			head string
-			base string}{
-				title: "something",
-				body: "a body",
-				head: "vor:test",
-				base: base,
+			Title string `json:"title"`
+			Body string `json:"body"`
+			Head string `json:"head"`
+			Base string `json:"base"`}{
+				Title: "something",
+				Body: "a body",
+				Head: "vor:test",
+				Base: base,
 		})
 		  git.Post("https://api.github.com/repos/"+owner+"/"+repo+"/pulls", b)
 	},
