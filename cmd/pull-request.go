@@ -57,7 +57,7 @@ var pullRequest = &cobra.Command{
 			Base string `json:"base"`}{
 				Title: "something",
 				Body: "a body",
-				Head: "vor:test",
+				Head: "trevor-atlas:test",
 				Base: base,
 		})
 		  git.Post("https://api.github.com/repos/"+owner+"/"+repo+"/pulls", b)
