@@ -42,15 +42,15 @@ var pullRequest = &cobra.Command{
 
 
 		logger.Debug("git remote owner: " + owner + ", base: " + base)
-		git.StashExistingChanges()
+		// git.StashExistingChanges()
 
 	/*
 	* master
 	platform/AQ-4329/story/notifications-page
 	*/
 		branches, _ := git.Call("branch")
-		branchMatcher, _ := regexp.Compile("^\\* (.*)\n$")
-		branch := branchMatcher.FindAllStringSubmatch(branches, -1)[0][0]
+		branchMatcher, _ := regexp.Compile("\\* (.*)")
+		branch := branchMatcher.FindAllStringSubmatch(branches, -1)[0][1]
 
 		fmt.Println("s", branch)
 
