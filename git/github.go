@@ -1,12 +1,17 @@
 package git
 
 import (
+	"strings"
 	"github.com/trevor-atlas/vor/utils"
 	"io/ioutil"
 	"fmt"
 	"bytes"
 	"net/http"
 )
+
+// func GeneratePRName(branchName string) string {
+	// branchName
+// }
 
 func Post (url string, json []byte) {
 	githubAPIKey := utils.GetStringEnv("github.apikey")

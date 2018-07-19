@@ -54,14 +54,11 @@ var pullRequest = &cobra.Command{
 
 		fmt.Println("s", branch)
 
-		git.Call("push -u")
-		// POST /repos/:owner/:repo/pulls
-		// {
-		// 	"title": "Amazing new feature",
-		// 	"body": "Please pull this in!",
-		// 	"head": "octocat:new-feature",
-		// 	"base": "master"
-		//   }
+		gpOutput, err := git.Call("push -u")
+		if err != nil {
+			utils.ExitWithMessage("Something went wrong pushing to github:\n" + gpOutput)
+		}
+
 		b, err := json.Marshal(git.PullRequestBody{
 				Title: "currentBranchName",
 				Body: "Created automagically by Vor",
