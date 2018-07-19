@@ -60,7 +60,7 @@ var pullRequest = &cobra.Command{
 		}
 
 		b, err := json.Marshal(git.PullRequestBody{
-				Title: "currentBranchName",
+				Title: branch,
 				Body: "Created automagically by Vor",
 				Head: owner+":"+branch,
 				Base: base,
