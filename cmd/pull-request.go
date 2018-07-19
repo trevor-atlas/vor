@@ -49,8 +49,8 @@ var pullRequest = &cobra.Command{
 	platform/AQ-4329/story/notifications-page
 	*/
 		branches, _ := git.Call("branch")
-		branchMatcher, _ := regexp.Compile("\\* (.*)\n$")
-		branch := branchMatcher.FindAllStringSubmatch(branches, 1)[0][0]
+		branchMatcher, _ := regexp.Compile("^\\* (.*)\n$")
+		branch := branchMatcher.FindAllStringSubmatch(branches, -1)[0][0]
 
 		fmt.Println("s", branch)
 
