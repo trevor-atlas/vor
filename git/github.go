@@ -1,6 +1,8 @@
 package git
 
 import (
+	"encoding/json"
+	"github.com/trevor-atlas/vor/logger"
 	"strings"
 	"github.com/trevor-atlas/vor/utils"
 	"io/ioutil"
@@ -13,9 +15,9 @@ import (
 	// branchName
 // }
 
-func Post (url string, json []byte) {
+func Post (url string, requestBody []byte) PullRequestResponse {
 	githubAPIKey := utils.GetStringEnv("github.apikey")
-    req, err := http.NewRequest("POST", url, bytes.NewBuffer(json))
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
     req.Header.Set("Authorization", "token " + githubAPIKey)
     req.Header.Set("Content-Type", "application/json")
 
@@ -24,10 +26,18 @@ func Post (url string, json []byte) {
     if err != nil {
         panic(err)
     }
-    defer resp.Body.Close()
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	parsed := PullRequestResponse{}
+	logger.Debug("response Status:", resp.Status)
+	logger.Debug("response Headers:", resp.Header)
+	logger.Debug("response Body:", string(body))
 
-    fmt.Println("response Status:", resp.Status)
-    fmt.Println("response Headers:", resp.Header)
-    body, _ := ioutil.ReadAll(resp.Body)
-    fmt.Println("response Body:", string(body))
+	parseError := json.Unmarshal(body, &parsed)
+	if parseError != nil {
+		fmt.Printf("error parsing json\n %s", parseError)
+		panic(parseError)
+	}
+	return parsed
+
 }
