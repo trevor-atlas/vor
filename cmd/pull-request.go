@@ -18,30 +18,42 @@ var pullRequest = &cobra.Command{
 		git.EnsureAvailability()
 		base := utils.GetStringEnv("git.pull-request-base")
 		githubAPIKey := utils.GetStringEnv("github.apikey")
+		owner := utils.GetStringEnv("github.owner")
 		if githubAPIKey == "" {
 			utils.ExitWithMessage("No github API key found in vor config (github.apikey)")
 		}
-		remotes, err := git.Call("remote -v")
-		if err != nil {
-			fmt.Println("err", err)
+		if base == "" {
+			fmt.Println("Repository base not found in config, falling back to origin/master...")
+			base = "master"
 		}
+		remotes, _ := git.Call("remote -v")
 
 		/* remotes will (likely) look like:
 		origin	https://github.com/owner/project.git (fetch)
 		origin	https://github.com/owner/project.git (push)
 		*/
-		re, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
-		res := re.FindAllStringSubmatch(remotes, 1)[0]
-		fmt.Println(res)
-		owner := res[1]
+		matcher, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
+		res := matcher.FindAllStringSubmatch(remotes, 1)[0]
+		logger.Debug("found matches", res)
+		if owner == "" {
+			owner = res[1]
+		}
 		repo := res[2]
 
-		if base == "" {
-			fmt.Println("Repository base not found in config, falling back to origin/master...")
-			base = "master"
-		}
+
 		logger.Debug("git remote owner: " + owner + ", base: " + base)
 		git.StashExistingChanges()
+
+	/*
+	* master
+	platform/AQ-4329/story/notifications-page
+	*/
+		branches, _ := git.Call("branch")
+		branchMatcher, _ := regexp.Compile("\\* (.*)\n$")
+		branch := branchMatcher.FindAllStringSubmatch(branches, 1)[0][0]
+
+		fmt.Println("s", branch)
+
 		git.Call("push -u")
 		// POST /repos/:owner/:repo/pulls
 		// {
@@ -50,16 +62,16 @@ var pullRequest = &cobra.Command{
 		// 	"head": "octocat:new-feature",
 		// 	"base": "master"
 		//   }
-		b, err := json.Marshal(struct{
-			Title string `json:"title"`
-			Body string `json:"body"`
-			Head string `json:"head"`
-			Base string `json:"base"`}{
-				Title: "something",
-				Body: "a body",
-				Head: "trevor-atlas:test",
+		b, err := json.Marshal(git.PullRequestBody{
+				Title: "currentBranchName",
+				Body: "Created automagically by Vor",
+				Head: owner+":"+branch,
 				Base: base,
 		})
+		if err != nil {
+			logger.Debug()
+			utils.ExitWithMessage("There was a problem marshaling the JSON to create the pull request!")
+		}
 		  git.Post("https://api.github.com/repos/"+owner+"/"+repo+"/pulls", b)
 	},
 }
