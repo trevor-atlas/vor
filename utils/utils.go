@@ -20,6 +20,19 @@ func PadOutput(padding int) func(string) string {
 	}
 }
 
+func TitleCase(s string) string {
+	r := strings.NewReplacer(
+		"-", " ",
+		"/", " ",
+		"\n", "",
+		"\t", " ")
+	var result string
+	for _, word := range strings.Split(r.Replace(s), " ") {
+		result += strings.ToUpper(string(word[0])) + string(word[1:])
+	}
+	return result
+}
+
 func KebabCase(s string) string {
 	r := strings.NewReplacer(
 " ", "-",

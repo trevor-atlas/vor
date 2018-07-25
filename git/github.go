@@ -3,7 +3,6 @@ package git
 import (
 	"encoding/json"
 	"github.com/trevor-atlas/vor/logger"
-	"strings"
 	"github.com/trevor-atlas/vor/utils"
 	"io/ioutil"
 	"fmt"
@@ -11,9 +10,9 @@ import (
 	"net/http"
 )
 
-// func GeneratePRName(branchName string) string {
-	// branchName
-// }
+func GeneratePRName(branchName string) string {
+	return utils.TitleCase(branchName)
+}
 
 func Post (url string, requestBody []byte) PullRequestResponse {
 	githubAPIKey := utils.GetStringEnv("github.apikey")
