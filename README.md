@@ -1,7 +1,7 @@
 # Vor – Jira & Git made simple
 // Vor, Norse Goddess who knows all.
 
-## Commands
+## Commands (u smell)
 **Create a branch for a specific jira issue**
 
 ```
