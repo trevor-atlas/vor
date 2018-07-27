@@ -103,7 +103,7 @@ func Trace() {
 	}
 }
 
-// ShellExec attempts to execute a given shell command
+// ShellExec attempts to execute a given shell command and return the results
 func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 	defer wg.Done() // Need to signal to waitgroup that this goroutine is done
 
@@ -113,11 +113,11 @@ func ShellExec(cmd string, wg *sync.WaitGroup) (string, error) {
 
 	out, err := exec.Command(head, args...).Output()
 	if err != nil {
-		logger.Error("ERROR: calling exec with '%s'\ncommand failed with %s\n", cmd, err)
+		logger.Error("ERROR: calling exec with '%s':\ncommand failed with %s\n", cmd, err)
 		Trace()
 	}
-	result := string(out)
-	return result, err
+
+	return string(out), err
 }
 
 // LeftPad pad s with pLen number of padStr

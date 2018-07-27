@@ -45,6 +45,47 @@ vor issue AQ-1234
 
 ## Setup
 
-`export JIRA_API_KEY={your jira api key}`
+Vör is project specific and usually requires a config at the root of that project (though this is not always true, it is recommended)
 
-id.atlassian.net get API key
+see an example config file [here](https://github.com/trevor-atlas/vor/blob/master/example.vor.yaml)
+
+The supported configuration options and their defaults are:
+
+```
+devmode: false // output additional logging information at runtime
+
+global.branchtemplate "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}
+branchtemplate: ""
+
+global.jira.orgname: ""
+jira.orgname: ""
+
+global.jira.apikey: ""
+jira.apikey: ""
+
+global.jira.username: ""
+jira.username: ""
+
+global.github.apikey: ""
+github.apikey: ""
+
+github.owner: ""
+
+global.git.path: "/usr/local/bin/git"
+git.path: ""
+
+global.git.pull-request-base: "master"
+git.pull-request-base: ""
+```
+you can also export the config options in your `bash_profile` or elsewhere like so:
+
+```
+export JIRA_API_KEY={your jira api key}
+```
+
+Vör also supports global configs for some options:
+these are loaded from your `~` directory or environment variables prefixed with `GLOBAL_`
+```
+export GLOBAL_JIRA_API_KEY=<your jira api key>
+```
+

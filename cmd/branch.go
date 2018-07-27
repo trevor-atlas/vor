@@ -13,6 +13,18 @@ import (
 	"github.com/trevor-atlas/vor/utils"
 )
 
+func generateIssueTag(issue jira.JiraIssue) string {
+	switch issue.Fields.IssueType.Name {
+	case "bug":
+		if issue.Fields.Priority.Name == "blocker" {
+			return "break"
+		}
+	return "bug"
+	case "story", "task": return "feature"
+	default: return "feature"
+	}
+}
+
 func generateBranchName(issue jira.JiraIssue) string {
 	branchTemplate := utils.GetStringEnv("branchtemplate")
 	projectName := utils.GetStringEnv("projectname")
@@ -27,7 +39,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 			templateParts[i] = issue.Key
 			break
 		case "{jira-issue-type}":
-			templateParts[i] = utils.LowerKebabCase(issue.Fields.IssueType.Name)
+			templateParts[i] = generateIssueTag(issue)
 			break
 		case "{jira-issue-title}":
 			templateParts[i] = utils.LowerKebabCase(issue.Fields.Summary)
