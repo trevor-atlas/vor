@@ -55,9 +55,14 @@ var pullRequest = &cobra.Command{
 		fmt.Println("s", branch)
 
 		gpOutput, err := git.Call("push -u")
-		if err != nil {
+
+		// If the upstread is not set, do it for us! otherwise panic cause this is weird
+		if err != nil && utils.CaseInsensitiveContains(gpOutput, "no upstream branch") {
+			git.Call("push --set-upstream origin " + branch)
+		} else {
 			utils.ExitWithMessage("Something went wrong pushing to github:\n" + gpOutput)
 		}
+
 
 		b, err := json.Marshal(git.PullRequestBody{
 				Title: branch,
