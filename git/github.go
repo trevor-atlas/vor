@@ -28,6 +28,9 @@ func Post (url string, requestBody []byte) PullRequestResponse {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	parsed := PullRequestResponse{}
+	// if utils.CaseInsensitiveContains(string(resp.Body), "No commits between") {
+		// utils.ExitWithMessage("Your branch is not changed from the base branch!")
+	// }
 	logger.Debug("response Status:", resp.Status)
 	logger.Debug("response Headers:", resp.Header)
 	logger.Debug("response Body:", string(body))
@@ -37,6 +40,7 @@ func Post (url string, requestBody []byte) PullRequestResponse {
 		fmt.Printf("error parsing json\n %s", parseError)
 		panic(parseError)
 	}
+	fmt.Println(parsed)
 	return parsed
 
 }

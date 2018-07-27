@@ -88,15 +88,18 @@ func Exists(path string) (bool, error) {
 
 // Trace spits out the current stack trace when called
 func Trace() {
-	pc := make([]uintptr, 15)
-	n := runtime.Callers(2, pc)
-	frames := runtime.CallersFrames(pc[:n])
-	shouldStop := false
-	fmt.Println("\nstack trace:")
-	for shouldStop != true {
-		frame, more := frames.Next()
-		fmt.Printf("%s:%d %s\n", frame.File, frame.Line, frame.Function)
-		shouldStop = !more
+	isDev := viper.GetBool("devmode")
+	if isDev {
+		pc := make([]uintptr, 15)
+		n := runtime.Callers(2, pc)
+		frames := runtime.CallersFrames(pc[:n])
+		shouldStop := false
+		fmt.Println("\nstack trace:")
+		for shouldStop != true {
+			frame, more := frames.Next()
+			fmt.Printf("%s:%d %s\n", frame.File, frame.Line, frame.Function)
+			shouldStop = !more
+		}
 	}
 }
 
