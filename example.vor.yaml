@@ -1,0 +1,9 @@
+devmode: true
+author: your name
+email: you@yourdomain.xyz
+jira:
+    username: <your jira username (sometimes an email)>
+    apikey: <your jira api key from id.atlassian.net>
+github:
+    owner: <the owner of the repository>
+    apikey: <your github api key>
