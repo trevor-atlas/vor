@@ -2,6 +2,7 @@ devmode: true
 author: your name
 email: you@yourdomain.xyz
 jira:
+    orgname: <your company name, usually contained in the url or your jira install>
     username: <your jira username (sometimes an email)>
     apikey: <your jira api key from id.atlassian.net>
 github:

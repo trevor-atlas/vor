@@ -1,6 +1,9 @@
 package jira
 
 import (
+	"github.com/dustin/go-humanize"
+	"time"
+	"unicode/utf8"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,6 +15,21 @@ import (
 	"text/tabwriter"
 
 	"github.com/trevor-atlas/vor/utils"
+)
+
+const (
+	top_left string = "\u256D"
+	top_right string = "\u256E"
+	bottom_left string = "\u2570"
+	bottom_right string = "\u256F"
+	x_line string = "\u2500"
+	y_line string = "\u2502"
+	bottom_left_sharp string = "\u2514"
+	bottom_right_sharp string = "\u2518"
+	shade string = "\u2591"
+	left_quote string = "\u201C"
+	right_quote string = "\u201D"
+	divider string = "\u2581"
 )
 
 func basicAuth(username, password string) string {
@@ -59,6 +77,9 @@ func PrintIssues(issues JiraIssues) {
 	verify := []JiraIssue{}
 
 	for _, issue := range issues.Issues {
+		if issue.Fields.IssueType.Name == "Sub-task" {
+			continue
+		}
 		switch issue.Fields.Status.Name {
 		case "To Do":
 			toDo = append(toDo, issue)
@@ -68,7 +89,8 @@ func PrintIssues(issues JiraIssues) {
 			review = append(review, issue)
 		case "Verification":
 			verify = append(verify, issue)
-		default: continue
+		default:
+			continue
 		}
 	}
 
@@ -83,13 +105,13 @@ func PrintIssues(issues JiraIssues) {
 		fmt.Println()
 		fmt.Print(cyan(column[0].Fields.Status.StatusCategory.Name))
 		fmt.Println(divider)
-		fmt.Fprintln(w, cyan("Issue No.") + "\t " + cyan("Issue Type") + "\t " + cyan("URL"))
+		fmt.Fprintln(w, cyan("Issue No.")+"\t "+cyan("Issue Type")+"\t "+cyan("URL"))
 		fmt.Fprintln(w)
 		for _, issue := range column {
 			fmt.Fprintln(w,
-				issue.Key + "\t "+
-				issue.Fields.IssueType.Name + "\t "+
-				issueURL+issue.Key)
+				issue.Key+"\t "+
+					issue.Fields.IssueType.Name+"\t "+
+					issueURL+issue.Key)
 			fmt.Fprintln(w)
 
 			// fmt.Println(issue.Fields.Summary)
@@ -99,15 +121,35 @@ func PrintIssues(issues JiraIssues) {
 }
 
 func PrintIssue(issue JiraIssue) {
+	orgName := utils.GetStringEnv("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
-	divider := "\n--------------------------------\n"
-	pad := utils.PadOutput(4)
 
-	w(issue.Fields.IssueType.Name + "\n")
-	w(divider + "Title: " + issue.Fields.Summary + "\n")
-	w("Description: " + formatMultiline(issue.Fields.Description, pad) + "\n")
-	w("created on: " + issue.Fields.Created + "\n")
+	pad := utils.PadOutput(2)
+	r := strings.Repeat
+	desired_width := 70
+	issueURL := "" + orgName + ".atlassian.net/browse/" + issue.Key
+
+
+	preFormatTitleLength := utf8.RuneCountInString(issue.Key + " " + issue.Fields.IssueType.Name + " " + left_quote + issue.Fields.Summary + right_quote)
+	padAmount := 0
+	if preFormatTitleLength < desired_width {
+		padAmount = preFormatTitleLength / 2
+	}
+	title := r(shade, padAmount) + " " + issue.Fields.IssueType.Name + " " + issue.Key + " " + left_quote + issue.Fields.Summary + right_quote + " " + r(shade, padAmount)
+	titleLen := utf8.RuneCountInString(title)
+
+	w(top_left + r(x_line, titleLen+2) + top_right + "\n")
+	w(y_line + " " + title + " " + y_line + "\n")
+	w(bottom_left + r(x_line, titleLen+2) + bottom_right + "\n")
+
+	w(pad("status: " + issue.Fields.Status.Name + "\n"))
+	w(pad("reporter: " + issue.Fields.Reporter.Name + "\n"))
+	w(pad("created: " + time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + "\n"))
+	w(pad("updated: " + humanize.Time(time.Time(*issue.Fields.Updated))  + "\n"))
+	w(pad("url: " + issueURL + "\n"))
+	w(" " + r(divider, titleLen + 1) + "\n")
+	w(formatMultiline(issue.Fields.Description, pad) + "\n")
 
 	if len(issue.Fields.Comment.Comments) > 0 {
 		w("Comments:" + divider)
@@ -187,4 +229,34 @@ func Filter(vs []JiraIssue, f func(JiraIssue) bool) []JiraIssue {
 		}
 	}
 	return vsf
+}
+
+// UnmarshalJSON will transform the JIRA time into a time.Time
+// during the transformation of the JIRA JSON response
+func (t *Time) UnmarshalJSON(b []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(b) == "null" {
+		return nil
+	}
+	ti, err := time.Parse("\"2006-01-02T15:04:05.999-0700\"", string(b))
+	if err != nil {
+		return err
+	}
+	*t = Time(ti)
+	return nil
+}
+
+// UnmarshalJSON will transform the JIRA date into a time.Time
+// during the transformation of the JIRA JSON response
+func (t *Date) UnmarshalJSON(b []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(b) == "null" {
+		return nil
+	}
+	ti, err := time.Parse("\"2006-01-02\"", string(b))
+	if err != nil {
+		return err
+	}
+	*t = Date(ti)
+	return nil
 }

@@ -1,5 +1,15 @@
 package jira
 
+import (
+	"time"
+)
+
+// Time represents the Time definition of JIRA as a time.Time of go
+type Time time.Time
+
+// Date represents the Date definition of JIRA as a time.Time of go
+type Date time.Time
+
 type jiraUser struct {
 	Active       bool   `json:"active"`
 	TimeZone     string `json:"timeZone"`
@@ -30,8 +40,8 @@ type JiraIssue struct {
 	Key    string `json:"key"`  // AQ-XXXX
 	Fields struct {
 		Summary           string // title of jira issue
-		Created           string `json:"created"` // 2018-05-25T04:18:06.836-0500
-		Updated           string `json:"updated"` // 2018-06-11T22:23:03.606-0500
+		Created           *Time `json:"created"` // 2018-05-25T04:18:06.836-0500
+		Updated           *Time `json:"updated"` // 2018-06-11T22:23:03.606-0500
 		Description       string // description of Jira issue
 		Reporter jiraUser
 		Assignee jiraUser
