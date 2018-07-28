@@ -1,4 +1,4 @@
-[changelog](https://github.com/trevor-atlas/vor/blob/master/CHANGELOG.md)
+[📋 changelog](https://github.com/trevor-atlas/vor/blob/master/CHANGELOG.md)
 ```
                   ___          ___
       ___        /\  \        /\  \
@@ -92,5 +92,5 @@ export GLOBAL_JIRA_API_KEY=<your jira api key>
 
 ---
 
-[Copyright (C) 2018 Trevor Atlas](https://github.com/trevor-atlas/vor/blob/master/LICENSE)
+[Copyright © 2018 Trevor Atlas](https://github.com/trevor-atlas/vor/blob/master/LICENSE)
 Vör is a command line tool to make working to Jira and Git/Github easier

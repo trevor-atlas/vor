@@ -12,13 +12,8 @@ var issue = &cobra.Command{
 	prints out an issue and its comments
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		issues := jira.GetIssues()
-		for _, issue := range issues.Issues {
-			if issue.Key == args[0] {
-				jira.PrintIssue(issue)
-				return
-			}
-		}
+		issue := jira.GetIssue(args[0])
+		jira.PrintIssue(issue)
 	},
 }
 

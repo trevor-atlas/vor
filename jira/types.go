@@ -28,8 +28,8 @@ type jiraComment struct {
 	Author       jiraUser
 	Body         string
 	UpdateAuthor jiraUser
-	Created      string
-	Updated      string
+	Created      *Time
+	Updated      *Time
 	Total        int
 }
 

@@ -30,6 +30,7 @@ const (
 	left_quote string = "\u201C"
 	right_quote string = "\u201D"
 	thick_underscore string = "\u2581"
+	max_len int = 70
 )
 
 func basicAuth(username, password string) string {
@@ -45,18 +46,46 @@ func redirectHandler(req *http.Request, via []*http.Request) error {
 }
 
 func formatMultiline(message string, formatter func(string) string) string {
-	maxLen := 120
 	var b strings.Builder
+	// write to the string builder
+	w := func (str string) {
+		b.WriteString(formatter(str))
+	}
+	// write to the string builder with a new line
+	wnl := func (str string) {
+		b.WriteString(formatter(str) + "\n")
+	}
+
 	for _, line := range strings.Split(message, "\n") {
-		if len(line) > maxLen && strings.Contains(line, ". ") {
-			for _, str := range strings.SplitAfter(line, ". ") {
-				b.WriteString(formatter(str) + "\n")
+		if utf8.RuneCountInString(line) > max_len {
+			if strings.Contains(line, "{code}") {
+				w("```")
+				for _, str := range strings.Split(line, "{code}") {
+					str_len := utf8.RuneCountInString(str)
+					if str_len > max_len {
+						if str_len / 2 > max_len {
+							wnl(str[0:str_len / 3])
+							wnl(" " + str[str_len / 3: (str_len / 3) * 2])
+							w(" " + str[(str_len / 3) * 2:])
+						} else {
+							wnl(str[0:str_len / 2])
+							wnl(" " + str[str_len / 2:])
+						}
+					} else {
+						wnl(str)
+					}
+				}
+				w("```")
+			} else if strings.Contains(line, ". ") {
+				for _, str := range strings.SplitAfter(line, ". ") {
+					wnl(str)
+				}
+			} else {
+				wnl(line[0:max_len - 4])
+				wnl(" " + line[max_len - 4:])
 			}
-		} else if len(line) > maxLen {
-			b.WriteString(formatter(line[0:maxLen]) + "\n")
-			b.WriteString(formatter(line[maxLen:]) + "\n")
 		} else {
-			b.WriteString(formatter(line) + "\n")
+			wnl(line)
 		}
 	}
 	return strings.Trim(b.String(), "\n")
@@ -113,49 +142,83 @@ func PrintIssues(issues JiraIssues) {
 					issue.Fields.IssueType.Name+"\t "+
 					issueURL+issue.Key)
 			fmt.Fprintln(w)
-
-			// fmt.Println(issue.Fields.Summary)
 		}
 		w.Flush()
 	}
 }
 
+// don't pass colorized output to this method yet, it messes up the math and I'm not sure of a good way to account for it yet
+func BuildTitle(title string, maxPadding int) (formattedTitle string, length int) {
+	r := strings.Repeat
+	if maxPadding > max_len {
+		maxPadding = max_len
+	}
+	if utf8.RuneCountInString(title) > max_len {
+		title = title[0:max_len - 3] + "..."
+	}
+	titleLen := utf8.RuneCountInString(title)
+
+	padAmount := 0
+	if titleLen < max_len {
+		padAmount = max_len - titleLen - 2
+		if padAmount > maxPadding {
+			padAmount = maxPadding
+		}
+	}
+	padding := " " + r(shade, padAmount) + " "
+	if utf8.RuneCountInString(padding) < 3 {
+		padding = " "
+	}
+	paddingSize := utf8.RuneCountInString(padding)
+	// the 2 here is accounting for the added spaces
+	hBorder := r(x_line, titleLen + (paddingSize * 2))
+	result := top_left + hBorder + top_right + "\n" +
+			  y_line + padding + title + padding + y_line + "\n" +
+			  bottom_left + hBorder + bottom_right + "\n"
+	return result, utf8.RuneCountInString(padding + title + padding)
+}
+
+
+
 func PrintIssue(issue JiraIssue) {
 	orgName := utils.GetStringEnv("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
-
 	pad := utils.PadOutput(2)
-	r := strings.Repeat
-	desired_width := 70
-	issueURL := "" + orgName + ".atlassian.net/browse/" + issue.Key
-	preFormatTitleLength := utf8.RuneCountInString(issue.Key + " " + issue.Fields.IssueType.Name + " " + left_quote + issue.Fields.Summary + right_quote)
-	padAmount := 0
-	if preFormatTitleLength < desired_width {
-		padAmount = preFormatTitleLength / 2
+	// wp := func (str string) {
+	// 	w(pad(str))
+	// }
+	wpnl := func (str string) {
+		w(pad(str) + "\n")
 	}
-	title := r(shade, padAmount) + " " + issue.Fields.IssueType.Name + " " + issue.Key + " " + left_quote + issue.Fields.Summary + right_quote + " " + r(shade, padAmount)
-	titleLen := utf8.RuneCountInString(title)
-	divider := r(thick_underscore, titleLen + 1)
+	issueURL := "" + orgName + ".atlassian.net/browse/" + issue.Key
+	cyan := color.New(color.FgHiCyan).SprintFunc()
+	blue := color.New(color.FgHiBlue).SprintFunc()
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	magenta := color.New(color.FgHiMagenta).SprintFunc()
+	title, _ := BuildTitle(left_quote + issue.Fields.Summary + right_quote, 10)
 
-	w(top_left + r(x_line, titleLen+2) + top_right + "\n")
-	w(y_line + " " + title + " " + y_line + "\n")
-	w(bottom_left + r(x_line, titleLen+2) + bottom_right + "\n")
-
-	w(pad("status: " + issue.Fields.Status.Name + "\n"))
-	w(pad("reporter: " + issue.Fields.Reporter.Name + "\n"))
-	w(pad("created: " + time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + "\n"))
-	w(pad("updated: " + humanize.Time(time.Time(*issue.Fields.Updated))  + "\n"))
-	w(pad("url: " + issueURL + "\n"))
-	w(" " + divider + "\n")
-	w(formatMultiline(issue.Fields.Description, pad) + "\n")
+	w(title)
+	wpnl(cyan("issue: ") + issue.Key)
+	wpnl(cyan("type: ") + issue.Fields.IssueType.Name)
+	wpnl(cyan("status: ") + issue.Fields.Status.Name)
+	wpnl(cyan("reporter: ") + magenta(issue.Fields.Reporter.Name))
+	wpnl(cyan("assignee: ") + magenta(issue.Fields.Assignee.Name))
+	wpnl(cyan("created: ") + yellow(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")))
+	wpnl(cyan("updated: ") + yellow(humanize.Time(time.Time(*issue.Fields.Updated))))
+	wpnl(cyan("url: ") + blue(issueURL))
+	wpnl(cyan("description:"))
+	w(formatMultiline(issue.Fields.Description, utils.PadOutput(4)) + "\n\n")
 
 	if len(issue.Fields.Comment.Comments) > 0 {
-		w("Comments:" + divider)
+		nestedPad := utils.PadOutput(4)
+		wpnl(cyan("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
-			w(pad("Author: " + comment.Author.Name + "\n"))
-			w(formatMultiline("\""+comment.Body+"\"", pad))
-			w(divider)
+			w(nestedPad(cyan("author: ") + comment.Author.Name + "\n"))
+			w(nestedPad(cyan("created: ") + yellow(time.Time(*comment.Created).Format("2006-01-02 15:04")))  + "\n")
+			w(nestedPad(cyan("updated: ") + yellow(humanize.Time(time.Time(*comment.Updated)))) + "\n")
+			w(nestedPad(cyan("body:\n")))
+			w(formatMultiline(comment.Body, utils.PadOutput(6)) + "\n\n")
 		}
 	}
 	fmt.Println(b.String())
