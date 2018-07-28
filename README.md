@@ -1,3 +1,4 @@
+[changelog](https://github.com/trevor-atlas/vor/blob/master/CHANGELOG.md)
 ```
                   ___          ___
       ___        /\  \        /\  \

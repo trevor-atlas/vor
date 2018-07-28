@@ -29,7 +29,7 @@ const (
 	shade string = "\u2591"
 	left_quote string = "\u201C"
 	right_quote string = "\u201D"
-	divider string = "\u2581"
+	thick_underscore string = "\u2581"
 )
 
 func basicAuth(username, password string) string {
@@ -129,8 +129,6 @@ func PrintIssue(issue JiraIssue) {
 	r := strings.Repeat
 	desired_width := 70
 	issueURL := "" + orgName + ".atlassian.net/browse/" + issue.Key
-
-
 	preFormatTitleLength := utf8.RuneCountInString(issue.Key + " " + issue.Fields.IssueType.Name + " " + left_quote + issue.Fields.Summary + right_quote)
 	padAmount := 0
 	if preFormatTitleLength < desired_width {
@@ -138,6 +136,7 @@ func PrintIssue(issue JiraIssue) {
 	}
 	title := r(shade, padAmount) + " " + issue.Fields.IssueType.Name + " " + issue.Key + " " + left_quote + issue.Fields.Summary + right_quote + " " + r(shade, padAmount)
 	titleLen := utf8.RuneCountInString(title)
+	divider := r(thick_underscore, titleLen + 1)
 
 	w(top_left + r(x_line, titleLen+2) + top_right + "\n")
 	w(y_line + " " + title + " " + y_line + "\n")
@@ -148,7 +147,7 @@ func PrintIssue(issue JiraIssue) {
 	w(pad("created: " + time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + "\n"))
 	w(pad("updated: " + humanize.Time(time.Time(*issue.Fields.Updated))  + "\n"))
 	w(pad("url: " + issueURL + "\n"))
-	w(" " + r(divider, titleLen + 1) + "\n")
+	w(" " + divider + "\n")
 	w(formatMultiline(issue.Fields.Description, pad) + "\n")
 
 	if len(issue.Fields.Comment.Comments) > 0 {
