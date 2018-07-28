@@ -147,7 +147,8 @@ func PrintIssues(issues JiraIssues) {
 	}
 }
 
-// don't pass colorized output to this method yet, it messes up the math and I'm not sure of a good way to account for it yet
+// BuildTitle creates a nice top-level outlined title
+// FIXME: don't pass colorized output to this method yet, it messes up the math and I'm not sure of a good way to account for it yet
 func BuildTitle(title string, maxPadding int) (formattedTitle string, length int) {
 	r := strings.Repeat
 	if maxPadding > max_len {
