@@ -28,3 +28,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added the `vor issue` command
 - Added the `vor pull-request` command
 - Added initial tests for `utils`
+- Added license
