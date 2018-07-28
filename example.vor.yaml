@@ -1,4 +1,5 @@
-devmode: true
+# .vor.yaml SHOULD BE .GITIGNORED YOU DUMMY! DONT COMMIT YOUR SECRETS TO GIT!
+
 author: your name
 email: you@yourdomain.xyz
 jira:
