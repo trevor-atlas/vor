@@ -87,9 +87,11 @@ var branch = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		git.EnsureAvailability()
-		git.StashExistingChanges()
+		didStash := git.StashExistingChanges()
 		branch := createBranch(args)
-		git.ApplyStash(branch + " created.\nwould you like to re-apply your stashed changes?")
+		if didStash {
+			git.ApplyStash(branch + " created.\nwould you like to re-apply your stashed changes?")
+		}
 	},
 }
 

@@ -46,16 +46,19 @@ func Call(command string) (string, error) {
 	return utils.ShellExec(localGitPath+" "+command, wg)
 }
 
-func StashExistingChanges() {
+func StashExistingChanges() (didStash bool) {
 	cmdOutput, _ := Call("status")
 	contains := func(substr string) bool { return utils.CaseInsensitiveContains(cmdOutput, substr) }
+
 	if contains("deleted") || contains("modified") || contains("Untracked") {
 		affirmed := utils.Confirm("Working directory is not clean. Stash changes?")
 		if !affirmed {
-			utils.ExitWithMessage("")
+			return false
 		}
 		Call("stash")
+		return true
 	}
+	return false
 }
 
 func ApplyStash(message string) {
