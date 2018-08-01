@@ -48,12 +48,19 @@ func Call(command string) (string, error) {
 
 func StashExistingChanges() {
 	cmdOutput, _ := Call("status")
-	c := utils.CaseInsensitiveContains
-	if c(cmdOutput, "deleted") || c(cmdOutput, "modified") || c(cmdOutput, "Untracked") {
+	contains := func(substr string) bool { return utils.CaseInsensitiveContains(cmdOutput, substr) }
+	if contains("deleted") || contains("modified") || contains("Untracked") {
 		affirmed := utils.Confirm("Working directory is not clean. Stash changes?")
 		if !affirmed {
 			utils.ExitWithMessage("")
 		}
 		Call("stash")
+	}
+}
+
+func ApplyStash(message string) {
+	affirm := utils.Confirm(message)
+	if affirm {
+		Call("stash apply")
 	}
 }

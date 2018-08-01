@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"github.com/fatih/color"
 	"fmt"
+	"github.com/fatih/color"
 	"strings"
 
 	"github.com/trevor-atlas/vor/jira"
@@ -19,9 +19,11 @@ func generateIssueTag(issue jira.JiraIssue) string {
 		if issue.Fields.Priority.Name == "blocker" {
 			return "break"
 		}
-	return "bug"
-	case "story", "task": return "feature"
-	default: return "feature"
+		return "bug"
+	case "story", "task":
+		return "feature"
+	default:
+		return "feature"
 	}
 }
 
@@ -52,7 +54,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 	return branchName
 }
 
-func createBranch(args []string) {
+func createBranch(args []string) (branchName string) {
 	logger.Debug("cli args: ", args)
 	issue := jira.GetIssue(args[0])
 	newBranchName := generateBranchName(issue)
@@ -72,6 +74,7 @@ func createBranch(args []string) {
 	}
 	git.Call("checkout -b " + newBranchName)
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
+	return newBranchName
 }
 
 var branch = &cobra.Command{
@@ -85,7 +88,8 @@ var branch = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		git.EnsureAvailability()
 		git.StashExistingChanges()
-		createBranch(args)
+		branch := createBranch(args)
+		git.ApplyStash(branch + " created.\nwould you like to re-apply your stashed changes?")
 	},
 }
 

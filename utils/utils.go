@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/spf13/viper"
 	"github.com/fatih/color"
+	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/logger"
 )
 
@@ -35,7 +35,7 @@ func TitleCase(s string) string {
 
 func KebabCase(s string) string {
 	r := strings.NewReplacer(
-" ", "-",
+		" ", "-",
 		":", "",
 		"/", "-",
 		"\n", "",
@@ -129,4 +129,3 @@ func LeftPad(s string, padStr string, pLen int) string {
 func RightPad(s string, padStr string, pLen int) string {
 	return s + strings.Repeat(padStr, pLen)
 }
-
