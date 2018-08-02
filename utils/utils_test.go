@@ -26,17 +26,17 @@ func TestLowerKebab(t *testing.T) {
 
 func TestCaseInsensitiveContains(t *testing.T) {
 	{
-		result := CaseInsensitiveContains("anything", "A")
+		result := contains("anything", "A")
 		expected := true
 		if result != expected {
-			t.Errorf("CaseInsensitiveContains was incorrect:\ngot: %t\nwant: %t", result, expected)
+			t.Errorf("contains was incorrect:\ngot: %t\nwant: %t", result, expected)
 		}
 	}
 	{
-		result := CaseInsensitiveContains("anything", "X")
+		result := contains("anything", "X")
 		expected := false
 		if result != expected {
-			t.Errorf("CaseInsensitiveContains was incorrect:\ngot: %t\nwant: %t", result, expected)
+			t.Errorf("contains was incorrect:\ngot: %t\nwant: %t", result, expected)
 		}
 	}
 }

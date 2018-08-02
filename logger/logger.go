@@ -15,11 +15,11 @@ func Error(message string, rest ...interface{}) {
 	color.Red(message, rest...)
 }
 
-func Debug(message ...interface{}) {
+func Debug(format string, message ...interface{}) {
 	isDev := viper.GetBool("devmode")
 	yellow := color.New(color.FgHiYellow).SprintFunc()
 	if isDev {
-		fmt.Printf(yellow("DEBUG: ") + "%s", message...)
+		fmt.Printf(yellow("DEBUG: ") + format, message...)
 		fmt.Println()
 	}
 }

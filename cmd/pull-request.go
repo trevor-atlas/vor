@@ -34,7 +34,7 @@ var pullRequest = &cobra.Command{
 		*/
 		matcher, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
 		res := matcher.FindAllStringSubmatch(remotes, 1)[0]
-		logger.Debug("found matches", res)
+		logger.Debug("found matches %s", res)
 		if owner == "" {
 			owner = res[1]
 		}
@@ -70,7 +70,7 @@ var pullRequest = &cobra.Command{
 				Base: base,
 		})
 		if err != nil {
-			logger.Debug()
+			logger.Debug("there was a problem unmarshalling the git response %s", err)
 			utils.ExitWithMessage("There was a problem marshaling the JSON to create the pull request!")
 		}
 		  git.Post("https://api.github.com/repos/"+owner+"/"+repo+"/pulls", b)

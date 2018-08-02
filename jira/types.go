@@ -2,6 +2,8 @@ package jira
 
 import (
 	"time"
+	"net/http"
+	"io/ioutil"
 )
 
 // Time represents the Time definition of JIRA as a time.Time of go
@@ -77,4 +79,41 @@ type JiraIssue struct {
 
 type JiraIssues struct {
 	Issues []JiraIssue
+}
+
+type HttpResponseFetcher interface {
+	Fetch(url string) ([]byte, error)
+}
+
+func (h *HTTP) Fetch(url string) ([]byte, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	contents, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return contents, nil
+}
+
+func (h *HTTP) FetchWithHeaders(url string, req http.Request, redirectHandler func(req *http.Request, via []*http.Request) error) ([]byte, error) {
+	client := &http.Client{
+		CheckRedirect: redirectHandler,
+		Timeout: time.Second * 10,
+	}
+
+	resp, err := client.Do(&req)
+	defer resp.Body.Close()
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return contents, nil
 }

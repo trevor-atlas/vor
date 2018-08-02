@@ -62,6 +62,10 @@ func createBranch(args []string) (branchName string) {
 	localBranches, _ := git.Call("branch")
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	replacer := strings.NewReplacer(
+		"", "",
+		"'", "",
+		"\"", "",
+		",", "",
 		" ", "",
 		"\r", "",
 		"\n", "")

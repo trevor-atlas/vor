@@ -1,37 +1,40 @@
 package jira
 
 import (
-	"github.com/dustin/go-humanize"
-	"time"
-	"unicode/utf8"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
+	"time"
+	"unicode/utf8"
+
+	"github.com/dustin/go-humanize"
+	"github.com/fatih/color"
 
 	"github.com/trevor-atlas/vor/utils"
 )
 
 const (
-	top_left string = "\u256D"
-	top_right string = "\u256E"
-	bottom_left string = "\u2570"
-	bottom_right string = "\u256F"
-	x_line string = "\u2500"
-	y_line string = "\u2502"
-	bottom_left_sharp string = "\u2514"
+	top_left           string = "\u256D"
+	top_right          string = "\u256E"
+	bottom_left        string = "\u2570"
+	bottom_right       string = "\u256F"
+	x_line             string = "\u2500"
+	y_line             string = "\u2502"
+	bottom_left_sharp  string = "\u2514"
 	bottom_right_sharp string = "\u2518"
-	shade string = "\u2591"
-	left_quote string = "\u201C"
-	right_quote string = "\u201D"
-	thick_underscore string = "\u2581"
-	max_len int = 70
+	shade              string = "\u2591"
+	left_quote         string = "\u201C"
+	right_quote        string = "\u201D"
+	thick_underscore   string = "\u2581"
+	max_len            int    = 70
 )
+
+
 
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
@@ -41,18 +44,18 @@ func basicAuth(username, password string) string {
 func redirectHandler(req *http.Request, via []*http.Request) error {
 	jiraUsername := utils.GetStringEnv("jira.username")
 	jiraKey := utils.GetStringEnv("jira.apikey")
-	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
+	req.Header.Add("Authorization", "Basic " + basicAuth(jiraUsername, jiraKey))
 	return nil
 }
 
 func formatMultiline(message string, formatter func(string) string) string {
 	var b strings.Builder
 	// write to the string builder
-	w := func (str string) {
+	w := func(str string) {
 		b.WriteString(formatter(str))
 	}
 	// write to the string builder with a new line
-	wnl := func (str string) {
+	wnl := func(str string) {
 		b.WriteString(formatter(str) + "\n")
 	}
 
@@ -63,13 +66,13 @@ func formatMultiline(message string, formatter func(string) string) string {
 				for _, str := range strings.Split(line, "{code}") {
 					str_len := utf8.RuneCountInString(str)
 					if str_len > max_len {
-						if str_len / 2 > max_len {
-							wnl(str[0:str_len / 3])
-							wnl(" " + str[str_len / 3: (str_len / 3) * 2])
-							w(" " + str[(str_len / 3) * 2:])
+						if str_len/2 > max_len {
+							wnl(str[0 : str_len/3])
+							wnl(" " + str[str_len/3:(str_len/3)*2])
+							w(" " + str[(str_len/3)*2:])
 						} else {
-							wnl(str[0:str_len / 2])
-							wnl(" " + str[str_len / 2:])
+							wnl(str[0 : str_len/2])
+							wnl(" " + str[str_len/2:])
 						}
 					} else {
 						wnl(str)
@@ -81,8 +84,8 @@ func formatMultiline(message string, formatter func(string) string) string {
 					wnl(str)
 				}
 			} else {
-				wnl(line[0:max_len - 4])
-				wnl(" " + line[max_len - 4:])
+				wnl(line[0 : max_len-4])
+				wnl(" " + line[max_len-4:])
 			}
 		} else {
 			wnl(line)
@@ -155,7 +158,7 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 		maxPadding = max_len
 	}
 	if utf8.RuneCountInString(title) > max_len {
-		title = title[0:max_len - 3] + "..."
+		title = title[0:max_len-3] + "..."
 	}
 	titleLen := utf8.RuneCountInString(title)
 
@@ -172,16 +175,14 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 	}
 	paddingSize := utf8.RuneCountInString(padding)
 	// the 2 here is accounting for the added spaces
-	hBorder := r(x_line, titleLen + (paddingSize * 2))
+	hBorder := r(x_line, titleLen+(paddingSize*2))
 	result := top_left + hBorder + top_right + "\n" +
-			  y_line + padding + title + padding + y_line + "\n" +
-			  bottom_left + hBorder + bottom_right + "\n"
+		y_line + padding + title + padding + y_line + "\n" +
+		bottom_left + hBorder + bottom_right + "\n"
 	return result, utf8.RuneCountInString(padding + title + padding)
 }
 
-
-
-func PrintIssue(issue JiraIssue) {
+func PrintIssue(issue JiraIssue) string {
 	orgName := utils.GetStringEnv("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
@@ -189,7 +190,7 @@ func PrintIssue(issue JiraIssue) {
 	// wp := func (str string) {
 	// 	w(pad(str))
 	// }
-	wpnl := func (str string) {
+	wpnl := func(str string) {
 		w(pad(str) + "\n")
 	}
 	issueURL := "" + orgName + ".atlassian.net/browse/" + issue.Key
@@ -197,7 +198,7 @@ func PrintIssue(issue JiraIssue) {
 	blue := color.New(color.FgHiBlue).SprintFunc()
 	yellow := color.New(color.FgHiYellow).SprintFunc()
 	magenta := color.New(color.FgHiMagenta).SprintFunc()
-	title, _ := BuildTitle(left_quote + issue.Fields.Summary + right_quote, 10)
+	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
 
 	w(title)
 	wpnl(cyan("issue: ") + issue.Key)
@@ -216,14 +217,19 @@ func PrintIssue(issue JiraIssue) {
 		wpnl(cyan("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
 			w(nestedPad(cyan("author: ") + comment.Author.Name + "\n"))
-			w(nestedPad(cyan("created: ") + yellow(time.Time(*comment.Created).Format("2006-01-02 15:04")))  + "\n")
-			w(nestedPad(cyan("updated: ") + yellow(humanize.Time(time.Time(*comment.Updated)))) + "\n")
+			w(nestedPad(cyan("created: ")+yellow(time.Time(*comment.Created).Format("2006-01-02 15:04"))) + "\n")
+			w(nestedPad(cyan("updated: ")+yellow(humanize.Time(time.Time(*comment.Updated)))) + "\n")
 			w(nestedPad(cyan("body:\n")))
 			w(formatMultiline(comment.Body, utils.PadOutput(6)) + "\n\n")
 		}
 	}
-	fmt.Println(b.String())
+
+	result := b.String()
+	fmt.Println(result)
+	return result
 }
+
+type HTTP struct{}
 
 func Get(url string) (*http.Response, error) {
 	jiraUsername := utils.GetStringEnv("jira.username")
@@ -241,28 +247,40 @@ func Get(url string) (*http.Response, error) {
 }
 
 func GetIssues() JiraIssues {
-	orgName := utils.GetStringEnv("jira.orgname")
-	url := "https://" + orgName + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
-
-	resp, err := Get(url)
-	if err != nil {
-		fmt.Printf("error making request")
-		panic(err)
+	defer utils.ExecutionTimer(time.Now(), "GetIssues")
+	orgname := utils.GetStringEnv("jira.orgname")
+	if orgname == "" {
+		utils.ExitWithMessage("jira.orgname config not found.")
 	}
-	defer resp.Body.Close()
+	username := utils.GetStringEnv("jira.username")
+	if username == "" {
+		utils.ExitWithMessage("jira.username config not found.")
+	}
+	apikey := utils.GetStringEnv("jira.apikey")
+	if apikey == "" {
+		utils.ExitWithMessage("jira.apikey config not found.")
+	}
+	url := "https://" + orgname + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", "Basic " + basicAuth(username, apikey))
+	body, err := HTTP{}.FetchWithHeaders(url, *req, redirectHandler)
+	if err != nil {
+		utils.ExitWithMessage("There was a problem making the request to the jira API in `GetIssues`")
+	}
 
-	body, err := ioutil.ReadAll(resp.Body)
 	parsed := JiraIssues{}
 
 	parseError := json.Unmarshal(body, &parsed)
 	if parseError != nil {
-		fmt.Printf("error parsing json\n %s", parseError)
-		panic(parseError)
+		fmt.Printf("There was a problem parsing the jira API response:\n%s\n", parseError)
+		utils.ExitWithMessage("")
 	}
 	return parsed
 }
 
 func GetIssue(issueNumber string) JiraIssue {
+	defer utils.ExecutionTimer(time.Now(), "GetIssue")
 	orgName := utils.GetStringEnv("jira.orgname")
 	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 

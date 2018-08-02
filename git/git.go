@@ -1,69 +1,66 @@
 package git
 
 import (
-	"sync"
-
 	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/utils"
 )
 
-func IsGitAvailable() (bool, error) {
-	localGitPath := utils.GetStringEnv("git.path")
-	return utils.Exists(localGitPath)
+type NativeGit interface {
+	Call(string) (string, error)
+	Stash() bool
+	UnStash(string)
 }
 
-func IsGitRepo() bool {
-	_, err := Call("status")
-	return err == nil
+type Git struct{
+	path string
 }
 
-// EnsureAvailability exits the program if:
-// A. it cannot find git in the local filesystem, or
-// B. you are not in a git repository
-// otherwise it does nothing (noop)
-func EnsureAvailability() {
-	localGit, _ := IsGitAvailable()
-	inRepo := IsGitRepo()
-
-	if !localGit {
-		utils.ExitWithMessage("could not find local git at \"/usr/local/bin/git\"")
+func NewGit() *Git {
+	g := new(Git)
+	osutil := utils.OS{}
+	localGit := utils.ENV{}.String("git.path")
+	exists, fsErr := osutil.Exists(localGit)
+	if fsErr != nil || !exists {
+		osutil.Exit("Could not find local git at " + localGit)
 	}
+	g.path = localGit
 
-	if !inRepo {
-		utils.ExitWithMessage("Git Status failed, are you in a valid git repository?")
+	_, gitErr := osutil.Exec(g.path + "status")
+	if gitErr != nil {
+		osutil.Exit("Invalid git repository")
 	}
+	return g
 }
 
 // Call – call a git command by name
 // you can pass arguments as well E.G:
 // git.Call("checkout -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
-func Call(command string) (string, error) {
-	localGitPath := utils.GetStringEnv("git.path")
+func (git *Git) Call(command string) (string, error) {
 	logger.Debug("calling 'git " + command + "'")
-	wg := new(sync.WaitGroup)
-	wg.Add(2)
-	return utils.ShellExec(localGitPath+" "+command, wg)
+	return utils.OS{}.Exec(git.path+" "+command)
 }
 
-func StashExistingChanges() (didStash bool) {
-	cmdOutput, _ := Call("status")
-	contains := func(substr string) bool { return utils.CaseInsensitiveContains(cmdOutput, substr) }
+// Stash – stash changes if the working directory is unclean
+func (git *Git) Stash() (didStash bool) {
+	cmdOutput, _ := git.Call("status")
+	contains := func(substr string) bool { return utils.Contains(cmdOutput, substr) }
 
-	if contains("deleted") || contains("modified") || contains("Untracked") {
-		affirmed := utils.Confirm("Working directory is not clean. Stash changes?")
+	if contains("deleted") || contains("modified") || contains("untracked") {
+		affirmed := utils.OS{}.Confirm("Working directory is not clean. Stash changes?")
 		if !affirmed {
 			return false
 		}
-		Call("stash")
+		git.Call("stash")
 		return true
 	}
 	return false
 }
 
-func ApplyStash(message string) {
-	affirm := utils.Confirm(message)
+// UnStash – unstash the top most stash (called after a Stash())
+func (git *Git) UnStash(message string) {
+	affirm := utils.OS{}.Confirm(message)
 	if affirm {
-		Call("stash apply")
+		git.Call("stash apply")
 	}
 }
