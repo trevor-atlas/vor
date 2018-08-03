@@ -2,6 +2,7 @@ package git
 
 import (
 	"github.com/trevor-atlas/vor/logger"
+	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
 )
 
@@ -11,23 +12,24 @@ type NativeGit interface {
 	UnStash(string)
 }
 
-type Git struct{
-	path string
+type Git struct {
+	Path string
+	Sys  system.OSHandler
 }
 
-func NewGit() *Git {
+func New(sys system.OSHandler, env system.Envloader) *Git {
 	g := new(Git)
-	osutil := utils.OS{}
-	localGit := utils.ENV{}.String("git.path")
-	exists, fsErr := osutil.Exists(localGit)
+	localGit := env.String("git.path")
+	exists, fsErr := sys.Exists(localGit)
 	if fsErr != nil || !exists {
-		osutil.Exit("Could not find local git at " + localGit)
+		sys.Exit("Could not find local git at " + "\"" + localGit + "\"")
 	}
-	g.path = localGit
+	g.Path = localGit
+	g.Sys = sys
 
-	_, gitErr := osutil.Exec(g.path + "status")
+	_, gitErr := sys.Exec(g.Path + " status")
 	if gitErr != nil {
-		osutil.Exit("Invalid git repository")
+		sys.Exit("Invalid git repository")
 	}
 	return g
 }
@@ -38,7 +40,7 @@ func NewGit() *Git {
 // returns the text output of the command and a standard error (if any)
 func (git *Git) Call(command string) (string, error) {
 	logger.Debug("calling 'git " + command + "'")
-	return utils.OS{}.Exec(git.path+" "+command)
+	return git.Sys.Exec(git.Path + " " + command)
 }
 
 // Stash – stash changes if the working directory is unclean
@@ -47,7 +49,7 @@ func (git *Git) Stash() (didStash bool) {
 	contains := func(substr string) bool { return utils.Contains(cmdOutput, substr) }
 
 	if contains("deleted") || contains("modified") || contains("untracked") {
-		affirmed := utils.OS{}.Confirm("Working directory is not clean. Stash changes?")
+		affirmed := git.Sys.Confirm("Working directory is not clean. Stash changes?")
 		if !affirmed {
 			return false
 		}
@@ -59,7 +61,7 @@ func (git *Git) Stash() (didStash bool) {
 
 // UnStash – unstash the top most stash (called after a Stash())
 func (git *Git) UnStash(message string) {
-	affirm := utils.OS{}.Confirm(message)
+	affirm := git.Sys.Confirm(message)
 	if affirm {
 		git.Call("stash apply")
 	}
