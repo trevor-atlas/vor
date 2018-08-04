@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/trevor-atlas/vor/git"
+	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
 )
 
@@ -28,8 +29,8 @@ func generateIssueTag(issue jira.JiraIssue) string {
 }
 
 func generateBranchName(issue jira.JiraIssue) string {
-	branchTemplate := utils.GetStringEnv("branchtemplate")
-	projectName := utils.GetStringEnv("projectname")
+	branchTemplate := system.GetString("branchtemplate")
+	projectName := system.GetString("projectname")
 	templateParts := strings.Split(branchTemplate, "/")
 
 	for i := range templateParts {
@@ -50,16 +51,18 @@ func generateBranchName(issue jira.JiraIssue) string {
 	}
 
 	branchName := strings.Join(templateParts, "/")
-	logger.Debug("build branch name: " + branchName)
+	log := logger.New()
+	log.Debug("build branch name: " + branchName)
 	return branchName
 }
 
 func createBranch(args []string) (branchName string) {
-	logger.Debug("cli args: ", args)
+	log := logger.New()
+	log.Debug("cli args: ", args)
 	issue := jira.GetIssue(args[0])
 	newBranchName := generateBranchName(issue)
 	fmt.Println(newBranchName)
-	localBranches, _ := git.Call("branch")
+	localBranches, _ := git.Client.Call("branch")
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	replacer := strings.NewReplacer(
 		"", "",
@@ -71,12 +74,12 @@ func createBranch(args []string) (branchName string) {
 		"\n", "")
 	for _, branch := range strings.Split(localBranches, "\n") {
 		if strings.ToLower(replacer.Replace(branch)) == strings.ToLower(newBranchName) {
-			git.Call("checkout " + branch)
+			git.Client.Call("checkout " + branch)
 			fmt.Println("checked out existing local branch: '" + cyan(branch) + "'")
 			return
 		}
 	}
-	git.Call("checkout -b " + newBranchName)
+	git.Client.Call("checkout -b " + newBranchName)
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 	return newBranchName
 }
@@ -90,11 +93,10 @@ var branch = &cobra.Command{
 	vor branch XX-4321
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		git.EnsureAvailability()
-		didStash := git.StashExistingChanges()
+		didStash := git.Client.Stash()
 		branch := createBranch(args)
 		if didStash {
-			git.ApplyStash(branch + " created.\nwould you like to re-apply your stashed changes?")
+			git.Client.UnStash(branch + " created.\nwould you like to re-apply your stashed changes?")
 		}
 	},
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
 
+	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
 )
 
@@ -34,17 +35,15 @@ const (
 	max_len            int    = 70
 )
 
-
-
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
 func redirectHandler(req *http.Request, via []*http.Request) error {
-	jiraUsername := utils.GetStringEnv("jira.username")
-	jiraKey := utils.GetStringEnv("jira.apikey")
-	req.Header.Add("Authorization", "Basic " + basicAuth(jiraUsername, jiraKey))
+	jiraUsername := system.Get.String("jira.username")
+	jiraKey := system.Get.String("jira.apikey")
+	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
 	return nil
 }
 
@@ -95,7 +94,7 @@ func formatMultiline(message string, formatter func(string) string) string {
 }
 
 func PrintIssues(issues JiraIssues) {
-	orgName := utils.GetStringEnv("jira.orgname")
+	orgName := system.Get.String("jira.orgname")
 	// var builder strings.Builder
 	// b := builder.WriteString
 	divider := "\n--------------------------------\n"
@@ -183,13 +182,10 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 }
 
 func PrintIssue(issue JiraIssue) string {
-	orgName := utils.GetStringEnv("jira.orgname")
+	orgName := system.Get.String("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
 	pad := utils.PadOutput(2)
-	// wp := func (str string) {
-	// 	w(pad(str))
-	// }
 	wpnl := func(str string) {
 		w(pad(str) + "\n")
 	}
@@ -232,8 +228,8 @@ func PrintIssue(issue JiraIssue) string {
 type HTTP struct{}
 
 func Get(url string) (*http.Response, error) {
-	jiraUsername := utils.GetStringEnv("jira.username")
-	jiraKey := utils.GetStringEnv("jira.apikey")
+	jiraUsername := system.Get.String("jira.username")
+	jiraKey := system.Get.String("jira.apikey")
 
 	client := &http.Client{
 		CheckRedirect: redirectHandler,
@@ -247,26 +243,27 @@ func Get(url string) (*http.Response, error) {
 }
 
 func GetIssues() JiraIssues {
-	defer utils.ExecutionTimer(time.Now(), "GetIssues")
-	orgname := utils.GetStringEnv("jira.orgname")
+	sys := system.NewOSHandler()
+	defer sys.ExecutionTimer(time.Now(), "GetIssues")
+	orgname := system.Get.String("jira.orgname")
 	if orgname == "" {
-		utils.ExitWithMessage("jira.orgname config not found.")
+		sys.Exit("jira.orgname config not found.")
 	}
-	username := utils.GetStringEnv("jira.username")
+	username := system.Get.String("jira.username")
 	if username == "" {
-		utils.ExitWithMessage("jira.username config not found.")
+		sys.Exit("jira.username config not found.")
 	}
-	apikey := utils.GetStringEnv("jira.apikey")
+	apikey := system.Get.String("jira.apikey")
 	if apikey == "" {
-		utils.ExitWithMessage("jira.apikey config not found.")
+		sys.Exit("jira.apikey config not found.")
 	}
 	url := "https://" + orgname + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", "Basic " + basicAuth(username, apikey))
+	req.Header.Add("Authorization", "Basic "+basicAuth(username, apikey))
 	body, err := HTTP{}.FetchWithHeaders(url, *req, redirectHandler)
 	if err != nil {
-		utils.ExitWithMessage("There was a problem making the request to the jira API in `GetIssues`")
+		sys.Exit("There was a problem making the request to the jira API in `GetIssues`")
 	}
 
 	parsed := JiraIssues{}
@@ -274,14 +271,15 @@ func GetIssues() JiraIssues {
 	parseError := json.Unmarshal(body, &parsed)
 	if parseError != nil {
 		fmt.Printf("There was a problem parsing the jira API response:\n%s\n", parseError)
-		utils.ExitWithMessage("")
+		sys.Exit("")
 	}
 	return parsed
 }
 
 func GetIssue(issueNumber string) JiraIssue {
-	defer utils.ExecutionTimer(time.Now(), "GetIssue")
-	orgName := utils.GetStringEnv("jira.orgname")
+	sys := system.NewOSHandler()
+	defer sys.ExecutionTimer(time.Now(), "GetIssue")
+	orgName := system.Get.String("jira.orgname")
 	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 
 	resp, err := Get(url)

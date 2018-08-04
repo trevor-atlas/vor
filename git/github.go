@@ -16,8 +16,7 @@ func GeneratePRName(branchName string) string {
 }
 
 func Post(url string, requestBody []byte) PullRequestResponse {
-	env := system.NewENVGetter()
-	githubAPIKey := env.String("github.apikey")
+	githubAPIKey := system.GetString("github.apikey")
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	req.Header.Set("Authorization", "token "+githubAPIKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -30,12 +29,13 @@ func Post(url string, requestBody []byte) PullRequestResponse {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	parsed := PullRequestResponse{}
-	// if utils.contains(string(resp.Body), "No commits between") {
-	// utils.ExitWithMessage("Your branch is not changed from the base branch!")
-	// }
-	logger.Debug("response Status: %s", resp.Status)
-	logger.Debug("response Headers: %s", resp.Header)
-	logger.Debug("response Body: %s", string(body))
+	if utils.Contains(string(body), "No commits between") {
+		system.Exit("Your branch is not changed from the base branch!")
+	}
+	log := logger.New()
+	log.Debug("response Status: %s", resp.Status)
+	log.Debug("response Headers: %s", resp.Header)
+	log.Debug("response Body: %s", string(body))
 
 	parseError := json.Unmarshal(body, &parsed)
 	if parseError != nil {
@@ -44,5 +44,4 @@ func Post(url string, requestBody []byte) PullRequestResponse {
 	}
 	fmt.Println(parsed)
 	return parsed
-
 }
