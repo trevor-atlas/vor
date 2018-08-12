@@ -29,7 +29,7 @@ var logger *Logger
 func New() *Logger {
 	once.Do(func() {
 		logger = &Logger{}
-		isDev := system.Get.Bool("devmode")
+		isDev := system.GetBool("devmode")
 		logger.isDev = isDev
 		logger.fmtYellow = color.New(color.FgHiYellow).SprintFunc()
 		logger.fmtRed = color.New(color.FgHiRed).SprintFunc()

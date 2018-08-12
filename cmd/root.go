@@ -17,7 +17,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "vor",
 	Short: "Vör – make Github and Jira easy",
-	Long:  `
+	Long: `
                   ___          ___
       ___        /\  \        /\  \
      /\  \      /::\  \      /::\  \
@@ -97,6 +97,7 @@ func initConfig() {
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("../")
 	viper.AddConfigPath("../../")
+	viper.AddConfigPath("../../../")
 	// Don't forget to read config either from cfgFile or from home directory!
 	if cfgFile != "" {
 		// Use config file from the flag.

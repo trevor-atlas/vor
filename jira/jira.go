@@ -41,8 +41,8 @@ func basicAuth(username, password string) string {
 }
 
 func redirectHandler(req *http.Request, via []*http.Request) error {
-	jiraUsername := system.Get.String("jira.username")
-	jiraKey := system.Get.String("jira.apikey")
+	jiraUsername := system.GetString("jira.username")
+	jiraKey := system.GetString("jira.apikey")
 	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
 	return nil
 }
@@ -94,7 +94,7 @@ func formatMultiline(message string, formatter func(string) string) string {
 }
 
 func PrintIssues(issues JiraIssues) {
-	orgName := system.Get.String("jira.orgname")
+	orgName := system.GetString("jira.orgname")
 	// var builder strings.Builder
 	// b := builder.WriteString
 	divider := "\n--------------------------------\n"
@@ -182,7 +182,7 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 }
 
 func PrintIssue(issue JiraIssue) string {
-	orgName := system.Get.String("jira.orgname")
+	orgName := system.GetString("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
 	pad := utils.PadOutput(2)
@@ -228,8 +228,8 @@ func PrintIssue(issue JiraIssue) string {
 type HTTP struct{}
 
 func Get(url string) (*http.Response, error) {
-	jiraUsername := system.Get.String("jira.username")
-	jiraKey := system.Get.String("jira.apikey")
+	jiraUsername := system.GetString("jira.username")
+	jiraKey := system.GetString("jira.apikey")
 
 	client := &http.Client{
 		CheckRedirect: redirectHandler,
@@ -243,19 +243,18 @@ func Get(url string) (*http.Response, error) {
 }
 
 func GetIssues() JiraIssues {
-	sys := system.NewOSHandler()
-	defer sys.ExecutionTimer(time.Now(), "GetIssues")
-	orgname := system.Get.String("jira.orgname")
+	defer system.ExecutionTimer(time.Now(), "GetIssues")
+	orgname := system.GetString("jira.orgname")
 	if orgname == "" {
-		sys.Exit("jira.orgname config not found.")
+		system.Exit("jira.orgname config not found.")
 	}
-	username := system.Get.String("jira.username")
+	username := system.GetString("jira.username")
 	if username == "" {
-		sys.Exit("jira.username config not found.")
+		system.Exit("jira.username config not found.")
 	}
-	apikey := system.Get.String("jira.apikey")
+	apikey := system.GetString("jira.apikey")
 	if apikey == "" {
-		sys.Exit("jira.apikey config not found.")
+		system.Exit("jira.apikey config not found.")
 	}
 	url := "https://" + orgname + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -263,7 +262,7 @@ func GetIssues() JiraIssues {
 	req.Header.Add("Authorization", "Basic "+basicAuth(username, apikey))
 	body, err := HTTP{}.FetchWithHeaders(url, *req, redirectHandler)
 	if err != nil {
-		sys.Exit("There was a problem making the request to the jira API in `GetIssues`")
+		system.Exit("There was a problem making the request to the jira API in `GetIssues`")
 	}
 
 	parsed := JiraIssues{}
@@ -271,15 +270,14 @@ func GetIssues() JiraIssues {
 	parseError := json.Unmarshal(body, &parsed)
 	if parseError != nil {
 		fmt.Printf("There was a problem parsing the jira API response:\n%s\n", parseError)
-		sys.Exit("")
+		system.Exit("")
 	}
 	return parsed
 }
 
 func GetIssue(issueNumber string) JiraIssue {
-	sys := system.NewOSHandler()
-	defer sys.ExecutionTimer(time.Now(), "GetIssue")
-	orgName := system.Get.String("jira.orgname")
+	defer system.ExecutionTimer(time.Now(), "GetIssue")
+	orgName := system.GetString("jira.orgname")
 	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 
 	resp, err := Get(url)
