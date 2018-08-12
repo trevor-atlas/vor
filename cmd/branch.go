@@ -98,7 +98,7 @@ var branch = &cobra.Command{
 		didStash := gc.Stash()
 		branch := createBranch(args)
 		if didStash {
-			git.Client.UnStash(branch + " created.\nwould you like to re-apply your stashed changes?")
+			gc.UnStash(branch + " created.\nwould you like to re-apply your stashed changes?")
 		}
 	},
 }
