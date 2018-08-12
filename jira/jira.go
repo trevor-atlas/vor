@@ -195,14 +195,18 @@ func PrintIssue(issue JiraIssue) string {
 	yellow := color.New(color.FgHiYellow).SprintFunc()
 	magenta := color.New(color.FgHiMagenta).SprintFunc()
 	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
+	assignee := issue.Fields.Assignee.Name
+	if assignee == "" {
+		assignee = "<unassigned>"
+	}
 
 	w(title)
 	wpnl(cyan("issue: ") + issue.Key)
 	wpnl(cyan("type: ") + issue.Fields.IssueType.Name)
 	wpnl(cyan("status: ") + issue.Fields.Status.Name)
 	wpnl(cyan("reporter: ") + magenta(issue.Fields.Reporter.Name))
-	wpnl(cyan("assignee: ") + magenta(issue.Fields.Assignee.Name))
-	wpnl(cyan("created: ") + yellow(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")))
+	wpnl(cyan("assignee: ") + magenta(assignee))
+	wpnl(cyan("created: ") + yellow(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*issue.Fields.Created))) + ")")
 	wpnl(cyan("updated: ") + yellow(humanize.Time(time.Time(*issue.Fields.Updated))))
 	wpnl(cyan("url: ") + blue(issueURL))
 	wpnl(cyan("description:"))
@@ -213,7 +217,7 @@ func PrintIssue(issue JiraIssue) string {
 		wpnl(cyan("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
 			w(nestedPad(cyan("author: ") + comment.Author.Name + "\n"))
-			w(nestedPad(cyan("created: ")+yellow(time.Time(*comment.Created).Format("2006-01-02 15:04"))) + "\n")
+			w(nestedPad(cyan("created: ")+yellow(time.Time(*comment.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*comment.Created)) + ")\n")))
 			w(nestedPad(cyan("updated: ")+yellow(humanize.Time(time.Time(*comment.Updated)))) + "\n")
 			w(nestedPad(cyan("body:\n")))
 			w(formatMultiline(comment.Body, utils.PadOutput(6)) + "\n\n")
