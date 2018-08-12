@@ -32,7 +32,7 @@ var rootCmd = &cobra.Command{
 
  Vör Copyright (C) 2018  Trevor Atlas
 
- This program comes with ABSOLUTELY NO WARRANTY; for details type 'show l'. This is free software, and you are welcome to redistribute it.
+ This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it.
  Vör – A fast and flexible commandline tool for working with Github and Jira`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
