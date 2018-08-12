@@ -44,7 +44,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 		case "{jira-issue-type}":
 			templateParts[i] = generateIssueTag(issue)
 			break
-
+		case "{jira-issue-title}":
 			templateParts[i] = utils.LowerKebabCase(issue.Fields.Summary)
 			break
 		}
