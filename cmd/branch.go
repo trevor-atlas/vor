@@ -58,11 +58,12 @@ func generateBranchName(issue jira.JiraIssue) string {
 
 func createBranch(args []string) (branchName string) {
 	log := logger.New()
+	gc := git.New()
 	log.Debug("cli args: ", args)
 	issue := jira.GetIssue(args[0])
 	newBranchName := generateBranchName(issue)
 	fmt.Println(newBranchName)
-	localBranches, _ := git.Client.Call("branch")
+	localBranches, _ := gc.Call("branch")
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	replacer := strings.NewReplacer(
 		"", "",
@@ -74,12 +75,12 @@ func createBranch(args []string) (branchName string) {
 		"\n", "")
 	for _, branch := range strings.Split(localBranches, "\n") {
 		if strings.ToLower(replacer.Replace(branch)) == strings.ToLower(newBranchName) {
-			git.Client.Call("checkout " + branch)
+			gc.Call("checkout " + branch)
 			fmt.Println("checked out existing local branch: '" + cyan(branch) + "'")
 			return
 		}
 	}
-	git.Client.Call("checkout -b " + newBranchName)
+	gc.Call("checkout -b " + newBranchName)
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 	return newBranchName
 }
@@ -93,7 +94,8 @@ var branch = &cobra.Command{
 	vor branch XX-4321
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		didStash := git.Client.Stash()
+		gc := git.New()
+		didStash := gc.Stash()
 		branch := createBranch(args)
 		if didStash {
 			git.Client.UnStash(branch + " created.\nwould you like to re-apply your stashed changes?")

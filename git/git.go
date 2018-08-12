@@ -18,11 +18,11 @@ type client struct {
 }
 
 var once sync.Once
-var Client *client
+var Client client
 
-func New() *client {
+func New() client {
 	once.Do(func() {
-		localGit := system.GetString("Client.path")
+		localGit := system.GetString("git.path")
 		exists, fsErr := system.Exists(localGit)
 		if fsErr != nil || !exists {
 			system.Exit("Could not find local Client at " + "\"" + localGit + "\"")
@@ -31,7 +31,7 @@ func New() *client {
 
 		_, gitErr := system.Exec(Client.Path + " status")
 		if gitErr != nil {
-			system.Exit("Invalid Client repository")
+			system.Exit("Invalid git repository")
 		}
 	})
 	return Client
