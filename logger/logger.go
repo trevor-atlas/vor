@@ -3,7 +3,7 @@ package logger
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/trevor-atlas/vor/system"
+	"github.com/spf13/viper"
 	"sync"
 )
 
@@ -29,7 +29,7 @@ var logger *Logger
 func New() *Logger {
 	once.Do(func() {
 		logger = &Logger{}
-		isDev := system.GetBool("devmode")
+		isDev := viper.GetBool("devmode")
 		logger.isDev = isDev
 		logger.fmtYellow = color.New(color.FgHiYellow).SprintFunc()
 		logger.fmtRed = color.New(color.FgHiRed).SprintFunc()

@@ -1,9 +1,9 @@
 package jira
 
 import (
-	"time"
-	"net/http"
 	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 // Time represents the Time definition of JIRA as a time.Time of go
@@ -42,15 +42,15 @@ type JiraIssue struct {
 	Key    string `json:"key"`  // AQ-XXXX
 	Fields struct {
 		Summary           string // title of jira issue
-		Created           *Time `json:"created"` // 2018-05-25T04:18:06.836-0500
-		Updated           *Time `json:"updated"` // 2018-06-11T22:23:03.606-0500
+		Created           *Time  `json:"created"` // 2018-05-25T04:18:06.836-0500
+		Updated           *Time  `json:"updated"` // 2018-06-11T22:23:03.606-0500
 		Description       string // description of Jira issue
-		Reporter jiraUser
-		Assignee jiraUser
+		Reporter          jiraUser
+		Assignee          jiraUser
 		Customfield_12022 struct {
 			Value string // team name
 		}
-		Comment  struct {
+		Comment struct {
 			Comments []jiraComment
 		}
 		Priority struct {
@@ -62,16 +62,16 @@ type JiraIssue struct {
 			IconURL string `json:"iconUrl"`
 		}
 		Status struct {
-			Description string
-			Name string
+			Description    string
+			Name           string
 			StatusCategory struct {
-				Key string
+				Key  string
 				Name string
-				ID int
+				ID   int
 			}
 		}
 		Project struct {
-			Key string
+			Key  string
 			Name string
 		}
 	} `json:"fields"`
@@ -85,7 +85,9 @@ type HttpResponseFetcher interface {
 	Fetch(url string) ([]byte, error)
 }
 
-func (h *HTTP) Fetch(url string) ([]byte, error) {
+type HTTP struct{}
+
+func (h HTTP) Fetch(url string) ([]byte, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -101,10 +103,10 @@ func (h *HTTP) Fetch(url string) ([]byte, error) {
 	return contents, nil
 }
 
-func (h *HTTP) FetchWithHeaders(url string, req http.Request, redirectHandler func(req *http.Request, via []*http.Request) error) ([]byte, error) {
+func (h HTTP) FetchWithHeaders(url string, req http.Request, redirectHandler func(req *http.Request, via []*http.Request) error) ([]byte, error) {
 	client := &http.Client{
 		CheckRedirect: redirectHandler,
-		Timeout: time.Second * 10,
+		Timeout:       time.Second * 10,
 	}
 
 	resp, err := client.Do(&req)

@@ -225,8 +225,6 @@ func PrintIssue(issue JiraIssue) string {
 	return result
 }
 
-type HTTP struct{}
-
 func Get(url string) (*http.Response, error) {
 	jiraUsername := system.GetString("jira.username")
 	jiraKey := system.GetString("jira.apikey")
