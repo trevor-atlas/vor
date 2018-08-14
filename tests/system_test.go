@@ -26,8 +26,8 @@ func TestGetStringFallsBackToGlobal(t *testing.T) {
 	viper.SetDefault("global.testthing", "this should match")
 	result := system.GetString("testthing")
 	expected := "this should match"
-	if expected > result {
-		t.Errorf("GetStringEnv was incorrect:\ngot: '%d'\nwant: '%d'", len(result), expected)
+	if expected != result {
+		t.Errorf("GetStringEnv was incorrect:\ngot: '%s'\nwant: '%s'", result, expected)
 	}
 }
 
@@ -35,7 +35,7 @@ func TestGetStringEnvDoesNotExist(t *testing.T) {
 	result := system.GetString("SOMETHING_THAT_DOES_NOT_EXIST")
 	expected := ""
 	if expected != result {
-		t.Errorf("GetStringEnv was incorrect:\ngot: '%d'\nwant: '%d'", len(result), expected)
+		t.Errorf("GetStringEnv was incorrect:\ngot: '%s'\nwant: '%s'", result, expected)
 	}
 }
 

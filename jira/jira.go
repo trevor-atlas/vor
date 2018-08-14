@@ -1,9 +1,9 @@
 package jira
 
 import (
-		"encoding/json"
+	"encoding/json"
 	"fmt"
-		"net/http"
+	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -13,10 +13,10 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
 
-	"github.com/trevor-atlas/vor/system"
-	"github.com/trevor-atlas/vor/utils"
 	"encoding/base64"
 	"github.com/trevor-atlas/vor/rest"
+	"github.com/trevor-atlas/vor/system"
+	"github.com/trevor-atlas/vor/utils"
 )
 
 const (
@@ -206,7 +206,7 @@ func PrintIssue(issue JiraIssue) string {
 	wpnl(cyan("status: ") + issue.Fields.Status.Name)
 	wpnl(cyan("reporter: ") + magenta(issue.Fields.Reporter.Name))
 	wpnl(cyan("assignee: ") + magenta(assignee))
-	wpnl(cyan("created: ") + yellow(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*issue.Fields.Created))) + ")")
+	wpnl(cyan("created: ") + yellow(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*issue.Fields.Created))) + ")")
 	wpnl(cyan("updated: ") + yellow(humanize.Time(time.Time(*issue.Fields.Updated))))
 	wpnl(cyan("url: ") + blue(issueURL))
 	wpnl(cyan("description:"))
@@ -217,7 +217,7 @@ func PrintIssue(issue JiraIssue) string {
 		wpnl(cyan("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
 			w(nestedPad(cyan("author: ") + comment.Author.Name + "\n"))
-			w(nestedPad(cyan("created: ")+yellow(time.Time(*comment.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*comment.Created)) + ")\n")))
+			w(nestedPad(cyan("created: ") + yellow(time.Time(*comment.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*comment.Created))+")\n")))
 			w(nestedPad(cyan("updated: ")+yellow(humanize.Time(time.Time(*comment.Updated)))) + "\n")
 			w(nestedPad(cyan("body:\n")))
 			w(formatMultiline(comment.Body, utils.PadOutput(6)) + "\n\n")
@@ -229,11 +229,11 @@ func PrintIssue(issue JiraIssue) string {
 	return result
 }
 
-func get(url string) ([]byte, error) {
+func get(url string, httpBuilder rest.RequestBuilder) ([]byte, error) {
 	username := system.GetString("jira.username")
 	apikey := system.GetString("jira.apikey")
 
-	client := rest.NewHTTPClient(
+	client := httpBuilder.NewHTTPClient(
 		&http.Client{
 			Transport:     nil,
 			CheckRedirect: redirectHandler,
@@ -241,7 +241,7 @@ func get(url string) ([]byte, error) {
 			Timeout:       time.Second * 10,
 		}).
 		WithHeader("Accept", "application/json").
-		WithHeader("Authorization", "Basic " + basicAuth(username, apikey)).
+		WithHeader("Authorization", "Basic "+basicAuth(username, apikey)).
 		Url(url)
 
 	return client.GET()
@@ -297,5 +297,3 @@ func GetIssue(issueNumber string) JiraIssue {
 	}
 	return parsed
 }
-
-
