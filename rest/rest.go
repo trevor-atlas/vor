@@ -35,6 +35,7 @@ func (h *HTTP) Body(body io.Reader) RequestBuilder {
 func NewHTTPClient(client *http.Client) RequestBuilder {
 	h := new(HTTP)
 	h.client = client
+	h.headers = make(map[string]string)
 	h.request, _ = http.NewRequest("", "", nil)
 	return h
 }
