@@ -1,9 +1,7 @@
 package jira
 
 import (
-	"io/ioutil"
-	"net/http"
-	"time"
+			"time"
 )
 
 // Time represents the Time definition of JIRA as a time.Time of go
@@ -81,41 +79,32 @@ type JiraIssues struct {
 	Issues []JiraIssue
 }
 
-type HttpResponseFetcher interface {
-	Fetch(url string) ([]byte, error)
+// UnmarshalJSON will transform the JIRA time into a time.Time
+// during the transformation of the JIRA JSON response
+func (t *Time) UnmarshalJSON(b []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(b) == "null" {
+		return nil
+	}
+	ti, err := time.Parse("\"2006-01-02T15:04:05.999-0700\"", string(b))
+	if err != nil {
+		return err
+	}
+	*t = Time(ti)
+	return nil
 }
 
-type HTTP struct{}
-
-func (h HTTP) Fetch(url string) ([]byte, error) {
-	response, err := http.Get(url)
+// UnmarshalJSON will transform the JIRA date into a time.Time
+// during the transformation of the JIRA JSON response
+func (t *Date) UnmarshalJSON(b []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(b) == "null" {
+		return nil
+	}
+	ti, err := time.Parse("\"2006-01-02\"", string(b))
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	defer response.Body.Close()
-
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return contents, nil
-}
-
-func (h HTTP) FetchWithHeaders(url string, req http.Request, redirectHandler func(req *http.Request, via []*http.Request) error) ([]byte, error) {
-	client := &http.Client{
-		CheckRedirect: redirectHandler,
-		Timeout:       time.Second * 10,
-	}
-
-	resp, err := client.Do(&req)
-	defer resp.Body.Close()
-
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return contents, nil
+	*t = Date(ti)
+	return nil
 }

@@ -1,11 +1,9 @@
 package jira
 
 import (
-	"encoding/base64"
-	"encoding/json"
+		"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+		"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -17,6 +15,8 @@ import (
 
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
+	"encoding/base64"
+	"github.com/trevor-atlas/vor/rest"
 )
 
 const (
@@ -229,19 +229,22 @@ func PrintIssue(issue JiraIssue) string {
 	return result
 }
 
-func Get(url string) (*http.Response, error) {
-	jiraUsername := system.GetString("jira.username")
-	jiraKey := system.GetString("jira.apikey")
+func get(url string) ([]byte, error) {
+	username := system.GetString("jira.username")
+	apikey := system.GetString("jira.apikey")
 
-	client := &http.Client{
-		CheckRedirect: redirectHandler,
-	}
-	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
+	client := rest.NewHTTPClient(
+		&http.Client{
+			Transport:     nil,
+			CheckRedirect: redirectHandler,
+			Jar:           nil,
+			Timeout:       time.Second * 10,
+		}).
+		WithHeader("Accept", "application/json").
+		WithHeader("Authorization", "Basic " + basicAuth(username, apikey)).
+		Url(url)
 
-	resp, err := client.Do(req)
-	return resp, err
+	return client.GET()
 }
 
 func GetIssues() JiraIssues {
@@ -259,10 +262,8 @@ func GetIssues() JiraIssues {
 		system.Exit("jira.apikey config not found.")
 	}
 	url := "https://" + orgname + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", "Basic "+basicAuth(username, apikey))
-	body, err := HTTP{}.FetchWithHeaders(url, *req, redirectHandler)
+
+	body, err := get(url)
 	if err != nil {
 		system.Exit("There was a problem making the request to the jira API in `GetIssues`")
 	}
@@ -282,17 +283,14 @@ func GetIssue(issueNumber string) JiraIssue {
 	orgName := system.GetString("jira.orgname")
 	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 
-	resp, err := Get(url)
+	res, err := get(url)
 	if err != nil {
 		fmt.Printf("error making request")
 		panic(err)
 	}
-	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
 	parsed := JiraIssue{}
-
-	parseError := json.Unmarshal(body, &parsed)
+	parseError := json.Unmarshal(res, &parsed)
 	if parseError != nil {
 		fmt.Printf("error parsing json\n %s", parseError)
 		panic(parseError)
@@ -300,42 +298,4 @@ func GetIssue(issueNumber string) JiraIssue {
 	return parsed
 }
 
-func Filter(vs []JiraIssue, f func(JiraIssue) bool) []JiraIssue {
-	vsf := make([]JiraIssue, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
-}
 
-// UnmarshalJSON will transform the JIRA time into a time.Time
-// during the transformation of the JIRA JSON response
-func (t *Time) UnmarshalJSON(b []byte) error {
-	// Ignore null, like in the main JSON package.
-	if string(b) == "null" {
-		return nil
-	}
-	ti, err := time.Parse("\"2006-01-02T15:04:05.999-0700\"", string(b))
-	if err != nil {
-		return err
-	}
-	*t = Time(ti)
-	return nil
-}
-
-// UnmarshalJSON will transform the JIRA date into a time.Time
-// during the transformation of the JIRA JSON response
-func (t *Date) UnmarshalJSON(b []byte) error {
-	// Ignore null, like in the main JSON package.
-	if string(b) == "null" {
-		return nil
-	}
-	ti, err := time.Parse("\"2006-01-02\"", string(b))
-	if err != nil {
-		return err
-	}
-	*t = Date(ti)
-	return nil
-}
