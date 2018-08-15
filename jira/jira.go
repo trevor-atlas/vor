@@ -229,11 +229,11 @@ func PrintIssue(issue JiraIssue) string {
 	return result
 }
 
-func get(url string, httpBuilder rest.RequestBuilder) ([]byte, error) {
+func get(url string) ([]byte, error) {
 	username := system.GetString("jira.username")
 	apikey := system.GetString("jira.apikey")
 
-	client := httpBuilder.NewHTTPClient(
+	client := rest.NewHTTPClient(
 		&http.Client{
 			Transport:     nil,
 			CheckRedirect: redirectHandler,
