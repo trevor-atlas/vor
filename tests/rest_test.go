@@ -23,6 +23,6 @@ func (h *mockHTTP) POST() ([]byte, error) {
 	return []byte{0, 0, 0, 0, 0}, nil
 }
 
-func (h *mockHTTP) Url(url string) rest.RequestBuilder {
+func (h *mockHTTP) URL(url string) rest.RequestBuilder {
 	return h
 }
