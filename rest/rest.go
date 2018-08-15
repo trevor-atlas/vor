@@ -2,27 +2,27 @@ package rest
 
 import (
 	"io"
-	"net/http"
 	"io/ioutil"
+	"net/http"
 )
 
 type RequestBuilder interface {
 	Body(body io.Reader) RequestBuilder
 	WithHeader(key, value string) RequestBuilder
-	Url(url string) RequestBuilder
+	URL(url string) RequestBuilder
 	GET() ([]byte, error)
 	POST() ([]byte, error)
 }
 
-type HTTP struct{
-	client *http.Client
+type HTTP struct {
+	client  *http.Client
 	request *http.Request
-	body io.Reader
-	url string
+	body    io.Reader
+	url     string
 	headers map[string]string
 }
 
-func (h *HTTP) Url(url string) RequestBuilder {
+func (h *HTTP) URL(url string) RequestBuilder {
 	h.url = url
 	return h
 }

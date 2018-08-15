@@ -242,7 +242,7 @@ func get(url string, httpBuilder rest.RequestBuilder) ([]byte, error) {
 		}).
 		WithHeader("Accept", "application/json").
 		WithHeader("Authorization", "Basic "+basicAuth(username, apikey)).
-		Url(url)
+		URL(url)
 
 	return client.GET()
 }
