@@ -78,11 +78,12 @@ func (h *HTTP) GET() ([]byte, error) {
 		}
 	}
 	resp, reqErr := h.client.Do(h.request)
-	defer resp.Body.Close()
 
 	if reqErr != nil {
 		return nil, reqErr
 	}
+
+	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

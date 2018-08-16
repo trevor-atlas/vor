@@ -75,12 +75,18 @@ func createBranch(args []string) (branchName string) {
 		"\n", "")
 	for _, branch := range strings.Split(localBranches, "\n") {
 		if strings.ToLower(replacer.Replace(branch)) == strings.ToLower(newBranchName) {
-			gc.Call("checkout " + branch)
+			_, err := gc.Call("checkout " + branch)
+			if err != nil {
+				system.Exit("error calling local git:\n'%s'", err)
+			}
 			fmt.Println("checked out existing local branch: '" + cyan(branch) + "'")
 			return
 		}
 	}
-	gc.Call("checkout -b " + newBranchName)
+	_, err := gc.Call("checkout -b " + newBranchName)
+	if err != nil {
+		system.Exit("error calling local git:\n'%s'", err)
+	}
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 	return newBranchName
 }

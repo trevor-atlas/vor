@@ -58,7 +58,10 @@ var pullRequest = &cobra.Command{
 		fmt.Println(gpOutput, err)
 		// If the upstread is not set, do it for us! otherwise panic cause this is weird
 		if err != nil {
-			gc.Call("push --set-upstream origin " + branch)
+			_, err := gc.Call("push --set-upstream origin " + branch)
+			if err != nil {
+				system.Exit("error calling local git:\n'%s'", err)
+			}
 			// utils.ExitWithMessage("Something went wrong pushing to github:\n" + gpOutput)
 		}
 

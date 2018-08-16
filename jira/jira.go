@@ -20,19 +20,16 @@ import (
 )
 
 const (
-	top_left           string = "\u256D"
-	top_right          string = "\u256E"
-	bottom_left        string = "\u2570"
-	bottom_right       string = "\u256F"
-	x_line             string = "\u2500"
-	y_line             string = "\u2502"
-	bottom_left_sharp  string = "\u2514"
-	bottom_right_sharp string = "\u2518"
-	shade              string = "\u2591"
-	left_quote         string = "\u201C"
-	right_quote        string = "\u201D"
-	thick_underscore   string = "\u2581"
-	max_len            int    = 70
+	top_left     string = "\u256D"
+	top_right    string = "\u256E"
+	bottom_left  string = "\u2570"
+	bottom_right string = "\u256F"
+	x_line       string = "\u2500"
+	y_line       string = "\u2502"
+	shade        string = "\u2591"
+	left_quote   string = "\u201C"
+	right_quote  string = "\u201D"
+	max_len      int    = 70
 )
 
 func basicAuth(username, password string) string {

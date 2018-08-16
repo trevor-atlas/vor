@@ -28,6 +28,9 @@ func Post(url string, requestBody []byte) PullRequestResponse {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		system.Exit("error parsing github response! %s", err)
+	}
 	parsed := PullRequestResponse{}
 	if utils.Contains(string(body), "No commits between") {
 		system.Exit("Your branch is not changed from the base branch!")

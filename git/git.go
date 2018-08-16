@@ -57,7 +57,10 @@ func (git gitClient) Stash() (didStash bool) {
 		if !affirmed {
 			return false
 		}
-		git.Call("stash")
+		_, err := git.Call("stash")
+		if err != nil {
+			system.Exit("error calling local git:\n'%s'", err)
+		}
 		return true
 	}
 	return false
@@ -67,6 +70,9 @@ func (git gitClient) Stash() (didStash bool) {
 func (git gitClient) UnStash(message string) {
 	affirm := system.Confirm(message)
 	if affirm {
-		git.Call("stash apply")
+		_, err := git.Call("stash apply")
+		if err != nil {
+			system.Exit("error calling local git:\n'%s'", err)
+		}
 	}
 }
