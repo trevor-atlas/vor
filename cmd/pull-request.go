@@ -60,7 +60,7 @@ var pullRequest = &cobra.Command{
 		if err != nil {
 			_, err := gc.Call("push --set-upstream origin " + branch)
 			if err != nil {
-				system.Exit("error calling local git:\n'%s'", err)
+				system.Exit("error calling local git")
 			}
 			// utils.ExitWithMessage("Something went wrong pushing to github:\n" + gpOutput)
 		}
