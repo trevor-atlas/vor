@@ -7,7 +7,7 @@ import (
 )
 
 type RequestBuilder interface {
-	Body(body io.Reader) RequestBuilder
+	BODY(body io.Reader) RequestBuilder
 	WithHeader(key, value string) RequestBuilder
 	URL(url string) RequestBuilder
 	GET() ([]byte, error)
@@ -15,47 +15,47 @@ type RequestBuilder interface {
 }
 
 type HTTP struct {
-	client  *http.Client
-	request *http.Request
-	body    io.Reader
-	url     string
-	headers map[string]string
+	Client  *http.Client
+	Request *http.Request
+	Body    io.Reader
+	Url     string
+	Headers map[string]string
 }
 
 func (h *HTTP) URL(url string) RequestBuilder {
-	h.url = url
+	h.Url = url
 	return h
 }
 
-func (h *HTTP) Body(body io.Reader) RequestBuilder {
-	h.body = body
+func (h *HTTP) BODY(body io.Reader) RequestBuilder {
+	h.Body = body
 	return h
 }
 
 func NewHTTPClient(client *http.Client) RequestBuilder {
 	h := new(HTTP)
-	h.client = client
-	h.headers = make(map[string]string)
-	h.request, _ = http.NewRequest("", "", nil)
+	h.Client = client
+	h.Headers = make(map[string]string)
+	h.Request, _ = http.NewRequest("", "", nil)
 	return h
 }
 
 func (h *HTTP) WithHeader(key, value string) RequestBuilder {
-	h.headers[key] = value
+	h.Headers[key] = value
 	return h
 }
 
 func (h *HTTP) POST() ([]byte, error) {
-	h.request, _ = http.NewRequest(http.MethodPost, h.url, h.body)
+	h.Request, _ = http.NewRequest(http.MethodPost, h.Url, h.Body)
 
-	if len(h.headers) != 0 {
-		for k, v := range h.headers {
-			h.request.Header.Add(k, v)
-			delete(h.headers, k)
+	if len(h.Headers) != 0 {
+		for k, v := range h.Headers {
+			h.Request.Header.Add(k, v)
+			delete(h.Headers, k)
 		}
 	}
 
-	response, resErr := h.client.Do(h.request)
+	response, resErr := h.Client.Do(h.Request)
 	if resErr != nil {
 		return nil, resErr
 	}
@@ -69,15 +69,15 @@ func (h *HTTP) POST() ([]byte, error) {
 }
 
 func (h *HTTP) GET() ([]byte, error) {
-	h.request, _ = http.NewRequest(http.MethodGet, h.url, nil)
+	h.Request, _ = http.NewRequest(http.MethodGet, h.Url, nil)
 
-	if len(h.headers) != 0 {
-		for k, v := range h.headers {
-			h.request.Header.Add(k, v)
-			delete(h.headers, k)
+	if len(h.Headers) != 0 {
+		for k, v := range h.Headers {
+			h.Request.Header.Add(k, v)
+			delete(h.Headers, k)
 		}
 	}
-	resp, reqErr := h.client.Do(h.request)
+	resp, reqErr := h.Client.Do(h.Request)
 
 	if reqErr != nil {
 		return nil, reqErr
