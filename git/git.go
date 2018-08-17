@@ -13,14 +13,14 @@ type NativeGit interface {
 	UnStash(string)
 }
 
-type gitClient struct {
+type GitClient struct {
 	Path string
 }
 
 var once sync.Once
-var client gitClient
+var client GitClient
 
-func New() gitClient {
+func New() GitClient {
 	once.Do(func() {
 		localGit := system.GetString("git.path")
 		exists, fsErr := system.Exists(localGit)
@@ -41,14 +41,14 @@ func New() gitClient {
 // you can pass arguments as well E.G:
 // Client.Call("checkout -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
-func (git gitClient) Call(command string) (string, error) {
+func (git GitClient) Call(command string) (string, error) {
 	log := logger.New()
 	log.Debug("calling 'Client " + command + "'")
 	return system.Exec(git.Path + " " + command)
 }
 
 // Stash – stash changes if the working directory is unclean
-func (git gitClient) Stash() (didStash bool) {
+func (git GitClient) Stash() (didStash bool) {
 	cmdOutput, _ := git.Call("status")
 	c := func(substr string) bool { return utils.Contains(cmdOutput, substr) }
 
@@ -67,7 +67,7 @@ func (git gitClient) Stash() (didStash bool) {
 }
 
 // UnStash – unstash the top most stash (called after a Stash())
-func (git gitClient) UnStash(message string) {
+func (git GitClient) UnStash(message string) {
 	affirm := system.Confirm(message)
 	if affirm {
 		_, err := git.Call("stash apply")
