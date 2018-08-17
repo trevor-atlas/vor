@@ -5,6 +5,7 @@ import (
 	"testing"
 	"github.com/spf13/viper"
 	"strings"
+	"github.com/trevor-atlas/vor/system"
 )
 
 func init() {
@@ -15,7 +16,7 @@ func init() {
 
 func TestNewGit(t *testing.T) {
 	gc := git.New()
-	expected := "/usr/local/bin/git"
+	expected := system.GetString("git.path")
 
 	if expected != gc.Path {
 		t.Errorf("client.New was incorrect:\ngot: %s\nwant: %s", gc.Path, expected)
