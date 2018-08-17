@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added the `vor branch` command
 - Added the `vor issues` command
 - Added the `vor issue` command
-- Added the `vor pull-request` command
-- Added initial tests for `utils`
+- Added the `vor pr` command
+- Added initial tests
+- Added Travis CI test runner
 - Added license
