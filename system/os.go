@@ -34,14 +34,10 @@ func Exit(message string) {
 
 // Exists returns whether the given file or directory exists or not
 func Exists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false, err
 	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return true, err
+	return true, nil
 }
 
 func Exec(cmd string) (string, error) {

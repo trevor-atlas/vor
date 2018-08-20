@@ -1,11 +1,11 @@
 package tests
 
 import (
-	"github.com/trevor-atlas/vor/git"
-	"testing"
-	"github.com/spf13/viper"
 	"strings"
-	"github.com/trevor-atlas/vor/system"
+	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/trevor-atlas/vor/git"
 )
 
 func init() {
@@ -16,7 +16,7 @@ func init() {
 
 func TestNewGit(t *testing.T) {
 	gc := git.New()
-	expected := system.GetString("git.path")
+	expected := viper.GetString("git.path")
 
 	if expected != gc.Path {
 		t.Errorf("client.New was incorrect:\ngot: %s\nwant: %s", gc.Path, expected)

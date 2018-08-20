@@ -1,10 +1,12 @@
 package git
 
 import (
+	"sync"
+
+	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
-	"sync"
 )
 
 type NativeGit interface {
@@ -22,7 +24,7 @@ var client GitClient
 
 func New() GitClient {
 	once.Do(func() {
-		localGit := system.GetString("git.path")
+		localGit := viper.GetString("git.path")
 		exists, fsErr := system.Exists(localGit)
 		if fsErr != nil || !exists {
 			system.Exit("Could not find local git client at " + "\"" + localGit + "\"")
@@ -43,7 +45,7 @@ func New() GitClient {
 // returns the text output of the command and a standard error (if any)
 func (git GitClient) Call(command string) (string, error) {
 	log := logger.New()
-	log.Debug("calling 'Client " + command + "'")
+	log.Debug("calling 'git " + command + "'")
 	return system.Exec(git.Path + " " + command)
 }
 

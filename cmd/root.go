@@ -56,34 +56,11 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vor.yaml, or the current directory)")
-
 	// Default environment configs
 	viper.SetDefault("devmode", false)
-
-	viper.SetDefault("global.branchtemplate", "{projectname}/{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
-	viper.SetDefault("branchtemplate", "")
-
-	viper.SetDefault("projectname", "")
-
-	viper.SetDefault("global.jira.orgname", "")
-	viper.SetDefault("jira.orgname", "")
-
-	viper.SetDefault("global.jira.apikey", "")
-	viper.SetDefault("global.jira.username", "")
-
-	viper.SetDefault("jira.username", "")
-	viper.SetDefault("jira.apikey", "")
-
-	viper.SetDefault("global.github.apikey", "")
-	viper.SetDefault("github.apikey", "")
-
-	viper.SetDefault("github.owner", "")
-
-	viper.SetDefault("global.git.path", "/usr/local/bin/git")
-	viper.SetDefault("git.path", "")
-
-	viper.SetDefault("global.git.pull-request-base", "master")
-	viper.SetDefault("git.pull-request-base", "")
+	viper.SetDefault("branchtemplate", "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
+	viper.SetDefault("git.path", "/usr/local/bin/git")
+	viper.SetDefault("git.pull-request-base", "master")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -94,6 +71,7 @@ func initConfig() {
 	// Search config in home directory with name ".vor"
 	viper.SetConfigType("yaml")
 	viper.SetConfigName(".vor")
+	viper.SetConfigFile(".vor")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("../")
 	viper.AddConfigPath("../../")

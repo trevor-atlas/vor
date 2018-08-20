@@ -1,13 +1,15 @@
 package commands
 
 import (
-			"github.com/spf13/cobra"
+	"encoding/json"
+	"fmt"
+	"regexp"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/git"
 	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/system"
-	"fmt"
-	"regexp"
-	"encoding/json"
 )
 
 var gc git.GitClient
@@ -22,7 +24,7 @@ func getRemotesMeta() (owner, repo string) {
 	matcher, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
 	res := matcher.FindAllStringSubmatch(remotes, 1)[0]
 	log.Debug("found matches %s", res)
-	_owner := system.GetString("github.owner")
+	_owner := viper.GetString("github.owner")
 	if owner == "" {
 		owner = res[1]
 	}
@@ -34,20 +36,22 @@ func getRemotesMeta() (owner, repo string) {
 func pr(args []string) {
 	var prMessage string
 	var prTitle string
+	gc = git.New()
+	log = *logger.New()
 
 	rootCmd.Flags().StringVarP(&prMessage, "message", "m", "Created automagically by Vor", "optional message for pull request description")
 
-	githubAPIKey := system.GetString("github.apikey")
+	githubAPIKey := viper.GetString("github.apikey")
 	if githubAPIKey == "" {
 		system.Exit("No github API key found in vor config (github.apikey)")
 	}
-	base := system.GetString("git.pull-request-base")
+	base := viper.GetString("git.pull-request-base")
 	if base == "" {
 		fmt.Println("Repository base not found in config, falling back to origin/master...")
 		base = "master"
 	}
 	owner, repo := getRemotesMeta()
-	
+
 	branch := getLocalBranchName()
 	if branch != "" {
 		rootCmd.Flags().StringVarP(&prTitle, "title", "t", branch, "optional title for pull request (defaults to branch name)")
@@ -90,19 +94,17 @@ func getLocalBranchName() string {
 }
 
 var pullRequest = &cobra.Command{
-	Use:   "pull-request",
+	Use:     "pull-request",
 	Aliases: []string{"pr", "pull"},
 	Example: "vor pr",
-	Short: "create a pull request with your current branch",
-	Long:  `create a pull request with your current branch against the default origin or a configured one`,
+	Short:   "create a pull request with your current branch",
+	Long:    `create a pull request with your current branch against the default origin or a configured one`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		pr(args)
 	},
 }
 
 func init() {
-	gc = git.New()
-	log = *logger.New()
+
 	rootCmd.AddCommand(pullRequest)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/trevor-atlas/vor/git"
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
+	"github.com/spf13/viper"
 )
 
 func generateIssueTag(issue jira.JiraIssue) string {
@@ -29,8 +30,8 @@ func generateIssueTag(issue jira.JiraIssue) string {
 }
 
 func generateBranchName(issue jira.JiraIssue) string {
-	branchTemplate := system.GetString("branchtemplate")
-	projectName := system.GetString("projectname")
+	branchTemplate := viper.GetString("branchtemplate")
+	projectName := viper.GetString("projectname")
 	templateParts := strings.Split(branchTemplate, "/")
 
 	for i := range templateParts {

@@ -12,8 +12,10 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
+	"github.com/spf13/viper"
 
 	"encoding/base64"
+
 	"github.com/trevor-atlas/vor/rest"
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
@@ -38,8 +40,8 @@ func basicAuth(username, password string) string {
 }
 
 func redirectHandler(req *http.Request, via []*http.Request) error {
-	jiraUsername := system.GetString("jira.username")
-	jiraKey := system.GetString("jira.apikey")
+	jiraUsername := viper.GetString("jira.username")
+	jiraKey := viper.GetString("jira.apikey")
 	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
 	return nil
 }
@@ -91,7 +93,7 @@ func formatMultiline(message string, formatter func(string) string) string {
 }
 
 func PrintIssues(issues JiraIssues) {
-	orgName := system.GetString("jira.orgname")
+	orgName := viper.GetString("jira.orgname")
 	// var builder strings.Builder
 	// b := builder.WriteString
 	divider := "\n--------------------------------\n"
@@ -179,7 +181,7 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 }
 
 func PrintIssue(issue JiraIssue) string {
-	orgName := system.GetString("jira.orgname")
+	orgName := viper.GetString("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
 	pad := utils.PadOutput(2)
@@ -227,8 +229,8 @@ func PrintIssue(issue JiraIssue) string {
 }
 
 func get(url string) ([]byte, error) {
-	username := system.GetString("jira.username")
-	apikey := system.GetString("jira.apikey")
+	username := viper.GetString("jira.username")
+	apikey := viper.GetString("jira.apikey")
 
 	client := rest.NewHTTPClient(
 		&http.Client{
@@ -246,15 +248,15 @@ func get(url string) ([]byte, error) {
 
 func GetIssues() JiraIssues {
 	defer system.ExecutionTimer(time.Now(), "GetIssues")
-	orgname := system.GetString("jira.orgname")
+	orgname := viper.GetString("jira.orgname")
 	if orgname == "" {
 		system.Exit("jira.orgname config not found.")
 	}
-	username := system.GetString("jira.username")
+	username := viper.GetString("jira.username")
 	if username == "" {
 		system.Exit("jira.username config not found.")
 	}
-	apikey := system.GetString("jira.apikey")
+	apikey := viper.GetString("jira.apikey")
 	if apikey == "" {
 		system.Exit("jira.apikey config not found.")
 	}
@@ -277,7 +279,7 @@ func GetIssues() JiraIssues {
 
 func GetIssue(issueNumber string) JiraIssue {
 	defer system.ExecutionTimer(time.Now(), "GetIssue")
-	orgName := system.GetString("jira.orgname")
+	orgName := viper.GetString("jira.orgname")
 	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 
 	res, err := get(url)

@@ -1,10 +1,11 @@
 package tests
 
 import (
-	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/system"
 	"strings"
 	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/trevor-atlas/vor/system"
 )
 
 const TEST_DATA_PATH = "../test-data/"
@@ -15,7 +16,7 @@ func init() {
 }
 
 func TestGetStringEnvExists(t *testing.T) {
-	result := system.GetString("PATH")
+	result := viper.GetString("PATH")
 	expected := 10
 	if expected > len(result) {
 		t.Errorf("GetStringEnv was incorrect:\ngot: '%d'\nwant: '%d'", len(result), expected)
@@ -24,7 +25,7 @@ func TestGetStringEnvExists(t *testing.T) {
 
 func TestGetStringFallsBackToGlobal(t *testing.T) {
 	viper.SetDefault("global.testthing", "this should match")
-	result := system.GetString("testthing")
+	result := viper.GetString("testthing")
 	expected := "this should match"
 	if expected != result {
 		t.Errorf("GetStringEnv was incorrect:\ngot: '%s'\nwant: '%s'", result, expected)
@@ -32,7 +33,7 @@ func TestGetStringFallsBackToGlobal(t *testing.T) {
 }
 
 func TestGetStringEnvDoesNotExist(t *testing.T) {
-	result := system.GetString("SOMETHING_THAT_DOES_NOT_EXIST")
+	result := viper.GetString("SOMETHING_THAT_DOES_NOT_EXIST")
 	expected := ""
 	if expected != result {
 		t.Errorf("GetStringEnv was incorrect:\ngot: '%s'\nwant: '%s'", result, expected)

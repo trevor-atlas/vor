@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
-	"io/ioutil"
-	"net/http"
 )
 
 func GeneratePRName(branchName string) string {
@@ -16,7 +18,7 @@ func GeneratePRName(branchName string) string {
 }
 
 func Post(url string, requestBody []byte) PullRequestResponse {
-	githubAPIKey := system.GetString("github.apikey")
+	githubAPIKey := viper.GetString("github.apikey")
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	req.Header.Set("Authorization", "token "+githubAPIKey)
 	req.Header.Set("Content-Type", "application/json")
