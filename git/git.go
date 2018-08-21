@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/system"
-	"github.com/trevor-atlas/vor/utils"
 )
 
 type NativeGit interface {
@@ -50,31 +49,17 @@ func (git GitClient) Call(command string) (string, error) {
 }
 
 // Stash – stash changes if the working directory is unclean
-func (git GitClient) Stash() (didStash bool) {
-	cmdOutput, _ := git.Call("status")
-	c := func(substr string) bool { return utils.Contains(cmdOutput, substr) }
-
-	if c("deleted") || c("modified") || c("untracked") {
-		affirmed := system.Confirm("Working directory is not clean. Stash changes?")
-		if !affirmed {
-			return false
-		}
-		_, err := git.Call("stash")
-		if err != nil {
-			system.Exit("error calling local git")
-		}
-		return true
+func (git GitClient) Stash() {
+	_, err := git.Call("stash")
+	if err != nil {
+		system.Exit("error stashing changes")
 	}
-	return false
 }
 
 // UnStash – unstash the top most stash (called after a Stash())
-func (git GitClient) UnStash(message string) {
-	affirm := system.Confirm(message)
-	if affirm {
-		_, err := git.Call("stash apply")
-		if err != nil {
-			system.Exit("error calling local git")
-		}
+func (git GitClient) UnStash() {
+	_, err := git.Call("stash apply")
+	if err != nil {
+		system.Exit("error unstashing changes")
 	}
 }

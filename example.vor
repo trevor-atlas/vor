@@ -1,4 +1,4 @@
-# .vor.yaml SHOULD BE .GITIGNORED YOU DUMMY! DONT COMMIT YOUR SECRETS TO GIT!
+# .vor SHOULD BE .GITIGNORED YOU DUMMY! DON'T COMMIT YOUR SECRETS TO GIT!
 
 author: your name
 email: you@yourdomain.xyz

@@ -10,15 +10,15 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/dustin/go-humanize"
-	"github.com/fatih/color"
-	"github.com/spf13/viper"
-
 	"encoding/base64"
+	"github.com/dustin/go-humanize"
 
+	"github.com/trevor-atlas/vor/env"
+	"github.com/trevor-atlas/vor/formatters"
 	"github.com/trevor-atlas/vor/rest"
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
+	"log"
 )
 
 const (
@@ -34,15 +34,22 @@ const (
 	max_len      int    = 70
 )
 
-func basicAuth(username, password string) string {
+func InstantiateHttpMethods(builder rest.RequestBuilder) func(url string) ([]byte, error) {
+	builder.
+		WithHeader("Accept", "application/json").
+		WithHeader("Authorization", "Basic "+BasicAuth(env.JIRA_USERNAME, env.JIRA_APIKEY))
+	return func(url string) ([]byte, error) {
+		return builder.URL(url).GET()
+	}
+}
+
+func BasicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
-func redirectHandler(req *http.Request, via []*http.Request) error {
-	jiraUsername := viper.GetString("jira.username")
-	jiraKey := viper.GetString("jira.apikey")
-	req.Header.Add("Authorization", "Basic "+basicAuth(jiraUsername, jiraKey))
+func RedirectHandler(req *http.Request, via []*http.Request) error {
+	req.Header.Add("Authorization", "Basic "+BasicAuth(env.JIRA_USERNAME, env.JIRA_APIKEY))
 	return nil
 }
 
@@ -92,15 +99,25 @@ func formatMultiline(message string, formatter func(string) string) string {
 	return strings.Trim(b.String(), "\n")
 }
 
+func PrintIssueJson(issue JiraIssue) {
+	data, err := json.Marshal(issue)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", data)
+}
+
+func PrintIssuesJson(issues JiraIssues) {
+	data, err := json.Marshal(issues)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", data)
+}
+
 func PrintIssues(issues JiraIssues) {
-	orgName := viper.GetString("jira.orgname")
-	// var builder strings.Builder
-	// b := builder.WriteString
 	divider := "\n--------------------------------\n"
-	// pad := utils.PadOutput(2)
-	cyan := color.New(color.FgHiCyan).SprintFunc()
-	// red := color.New(color.FgHiRed).SprintFunc()
-	issueURL := "" + orgName + ".atlassian.net/browse/"
+	issueURL := "" + env.JIRA_ORGNAME + ".atlassian.net/browse/"
 	toDo := []JiraIssue{}
 	inProg := []JiraIssue{}
 	review := []JiraIssue{}
@@ -133,9 +150,9 @@ func PrintIssues(issues JiraIssues) {
 			continue
 		}
 		fmt.Println()
-		fmt.Print(cyan(column[0].Fields.Status.StatusCategory.Name))
+		fmt.Print(formatters.CYAN(column[0].Fields.Status.StatusCategory.Name))
 		fmt.Println(divider)
-		fmt.Fprintln(w, cyan("Issue No.")+"\t "+cyan("Issue Type")+"\t "+cyan("URL"))
+		fmt.Fprintln(w, formatters.CYAN("Issue No.")+"\t "+formatters.CYAN("Issue Type")+"\t "+formatters.CYAN("URL"))
 		fmt.Fprintln(w)
 		for _, issue := range column {
 			fmt.Fprintln(w,
@@ -181,18 +198,14 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 }
 
 func PrintIssue(issue JiraIssue) string {
-	orgName := viper.GetString("jira.orgname")
 	var b strings.Builder
 	w := b.WriteString
 	pad := utils.PadOutput(2)
 	wpnl := func(str string) {
 		w(pad(str) + "\n")
 	}
-	issueURL := "" + orgName + ".atlassian.net/browse/" + issue.Key
-	cyan := color.New(color.FgHiCyan).SprintFunc()
-	blue := color.New(color.FgHiBlue).SprintFunc()
-	yellow := color.New(color.FgHiYellow).SprintFunc()
-	magenta := color.New(color.FgHiMagenta).SprintFunc()
+	issueURL := "" + env.JIRA_ORGNAME + ".atlassian.net/browse/" + issue.Key
+
 	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
 	assignee := issue.Fields.Assignee.Name
 	if assignee == "" {
@@ -200,25 +213,25 @@ func PrintIssue(issue JiraIssue) string {
 	}
 
 	w(title)
-	wpnl(cyan("issue: ") + issue.Key)
-	wpnl(cyan("type: ") + issue.Fields.IssueType.Name)
-	wpnl(cyan("status: ") + issue.Fields.Status.Name)
-	wpnl(cyan("reporter: ") + magenta(issue.Fields.Reporter.Name))
-	wpnl(cyan("assignee: ") + magenta(assignee))
-	wpnl(cyan("created: ") + yellow(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*issue.Fields.Created))) + ")")
-	wpnl(cyan("updated: ") + yellow(humanize.Time(time.Time(*issue.Fields.Updated))))
-	wpnl(cyan("url: ") + blue(issueURL))
-	wpnl(cyan("description:"))
+	wpnl(formatters.CYAN("issue: ") + issue.Key)
+	wpnl(formatters.CYAN("type: ") + issue.Fields.IssueType.Name)
+	wpnl(formatters.CYAN("status: ") + issue.Fields.Status.Name)
+	wpnl(formatters.CYAN("reporter: ") + formatters.MAGENTA(issue.Fields.Reporter.Name))
+	wpnl(formatters.CYAN("assignee: ") + formatters.MAGENTA(assignee))
+	wpnl(formatters.CYAN("created: ") + formatters.YELLOW(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*issue.Fields.Created))) + ")")
+	wpnl(formatters.CYAN("updated: ") + formatters.YELLOW(humanize.Time(time.Time(*issue.Fields.Updated))))
+	wpnl(formatters.CYAN("url: ") + formatters.BLUE(issueURL))
+	wpnl(formatters.CYAN("description:"))
 	w(formatMultiline(issue.Fields.Description, utils.PadOutput(4)) + "\n\n")
 
 	if len(issue.Fields.Comment.Comments) > 0 {
 		nestedPad := utils.PadOutput(4)
-		wpnl(cyan("comments:"))
+		wpnl(formatters.CYAN("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
-			w(nestedPad(cyan("author: ") + comment.Author.Name + "\n"))
-			w(nestedPad(cyan("created: ") + yellow(time.Time(*comment.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*comment.Created))+")\n")))
-			w(nestedPad(cyan("updated: ")+yellow(humanize.Time(time.Time(*comment.Updated)))) + "\n")
-			w(nestedPad(cyan("body:\n")))
+			w(nestedPad(formatters.CYAN("author: ") + comment.Author.Name + "\n"))
+			w(nestedPad(formatters.CYAN("created: ") + formatters.YELLOW(time.Time(*comment.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*comment.Created))+")\n")))
+			w(nestedPad(formatters.CYAN("updated: ")+formatters.YELLOW(humanize.Time(time.Time(*comment.Updated)))) + "\n")
+			w(nestedPad(formatters.CYAN("body:\n")))
 			w(formatMultiline(comment.Body, utils.PadOutput(6)) + "\n\n")
 		}
 	}
@@ -228,39 +241,9 @@ func PrintIssue(issue JiraIssue) string {
 	return result
 }
 
-func get(url string) ([]byte, error) {
-	username := viper.GetString("jira.username")
-	apikey := viper.GetString("jira.apikey")
-
-	client := rest.NewHTTPClient(
-		&http.Client{
-			Transport:     nil,
-			CheckRedirect: redirectHandler,
-			Jar:           nil,
-			Timeout:       time.Second * 10,
-		}).
-		WithHeader("Accept", "application/json").
-		WithHeader("Authorization", "Basic "+basicAuth(username, apikey)).
-		URL(url)
-
-	return client.GET()
-}
-
-func GetIssues() JiraIssues {
+func GetIssues(get func(url string) ([]byte, error)) JiraIssues {
 	defer system.ExecutionTimer(time.Now(), "GetIssues")
-	orgname := viper.GetString("jira.orgname")
-	if orgname == "" {
-		system.Exit("jira.orgname config not found.")
-	}
-	username := viper.GetString("jira.username")
-	if username == "" {
-		system.Exit("jira.username config not found.")
-	}
-	apikey := viper.GetString("jira.apikey")
-	if apikey == "" {
-		system.Exit("jira.apikey config not found.")
-	}
-	url := "https://" + orgname + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
+	url := "https://" + env.JIRA_ORGNAME + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
 
 	body, err := get(url)
 	if err != nil {
@@ -268,7 +251,6 @@ func GetIssues() JiraIssues {
 	}
 
 	parsed := JiraIssues{}
-
 	parseError := json.Unmarshal(body, &parsed)
 	if parseError != nil {
 		fmt.Printf("There was a problem parsing the jira API response:\n%s\n", parseError)
@@ -277,10 +259,9 @@ func GetIssues() JiraIssues {
 	return parsed
 }
 
-func GetIssue(issueNumber string) JiraIssue {
+func GetIssue(issueNumber string, get func(url string) ([]byte, error)) JiraIssue {
 	defer system.ExecutionTimer(time.Now(), "GetIssue")
-	orgName := viper.GetString("jira.orgname")
-	url := "https://" + orgName + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
+	url := "https://" + env.JIRA_ORGNAME + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 
 	res, err := get(url)
 	if err != nil {

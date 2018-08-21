@@ -9,17 +9,20 @@ import (
 	"github.com/trevor-atlas/vor/logger"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/git"
+	"github.com/trevor-atlas/vor/rest"
 	"github.com/trevor-atlas/vor/system"
 	"github.com/trevor-atlas/vor/utils"
-	"github.com/spf13/viper"
+	"net/http"
+	"time"
 )
 
 func generateIssueTag(issue jira.JiraIssue) string {
 	switch issue.Fields.IssueType.Name {
 	case "bug":
 		if issue.Fields.Priority.Name == "blocker" {
-			return "break"
+			return "blocker"
 		}
 		return "bug"
 	case "story", "task":
@@ -61,7 +64,14 @@ func createBranch(args []string) (branchName string) {
 	log := logger.New()
 	gc := git.New()
 	log.Debug("cli args: ", args)
-	issue := jira.GetIssue(args[0])
+	get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
+		&http.Client{
+			Transport:     nil,
+			CheckRedirect: jira.RedirectHandler,
+			Jar:           nil,
+			Timeout:       time.Second * 10,
+		}))
+	issue := jira.GetIssue(args[0], get)
 	newBranchName := generateBranchName(issue)
 	fmt.Println(newBranchName)
 	localBranches, _ := gc.Call("branch")
@@ -92,6 +102,8 @@ func createBranch(args []string) (branchName string) {
 	return newBranchName
 }
 
+var affirmAll bool
+var declineAll bool
 var branch = &cobra.Command{
 	Use:   "branch",
 	Short: "create a branch for a jira issue",
@@ -101,15 +113,43 @@ var branch = &cobra.Command{
 	vor branch XX-4321
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		gc := git.New()
-		didStash := gc.Stash()
-		branch := createBranch(args)
-		if didStash {
-			gc.UnStash(branch + " created.\nwould you like to re-apply your stashed changes?")
-		}
+		makeBranch(args)
 	},
 }
 
+func makeBranch(args []string) {
+	var didStash bool
+	gc := git.New()
+	cmdOutput, _ := gc.Call("status")
+	c := func(substr string) bool { return utils.Contains(cmdOutput, substr) }
+
+	if c("deleted") || c("modified") || c("untracked") {
+		if !affirmAll || !declineAll {
+			shouldStash := system.Confirm("Working directory is not clean. Stash changes?")
+			if shouldStash {
+				gc.Stash()
+				didStash = true
+			}
+		} else if affirmAll {
+			gc.Stash()
+			didStash = true
+		} else if declineAll {
+			didStash = false
+		}
+	}
+	branch := createBranch(args)
+	if didStash && !affirmAll && !declineAll {
+		affirm := system.Confirm(branch + " created.\nwould you like to re-apply your stashed changes?")
+		if affirm {
+			gc.UnStash()
+		}
+	} else if affirmAll {
+		gc.UnStash()
+	}
+}
+
 func init() {
+	branch.Flags().BoolVarP(&affirmAll, "yes", "y", false, "skip prompts and affirm")
+	branch.Flags().BoolVarP(&declineAll, "no", "n", false, "skip prompts and decline")
 	rootCmd.AddCommand(branch)
 }

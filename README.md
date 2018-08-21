@@ -48,7 +48,7 @@ vor issue AQ-1234
 
 Vör is project specific and usually requires a config at the root of that project (though this is not always true, it is recommended)
 
-see an example config file [here](https://github.com/trevor-atlas/vor/blob/master/example.vor.yaml)
+see an example config file [here](https://github.com/trevor-atlas/vor/blob/master/example.vor)
 
 The supported configuration options and their defaults are:
 
