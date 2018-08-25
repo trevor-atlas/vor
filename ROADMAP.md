@@ -2,20 +2,19 @@
 
 ## required for beta1 v0.1.0
 - general
-    - [ ] complete transition to interface based arch
-    - [ ] tests for each package
+    - [x] complete transition to interface based arch
 - branch
     - [x] create a branch based on jira issue
     - [x] customizable branch naming
     - [x] optional stash and unstash
 - issues
-    - [ ] pretty print a list of issues by jira column (must include issue title or it's useless)
+    - [x] pretty print a list of issues
 - issue
     - [x] pretty print a specific issue
 - pull-request
     - [x] create a pull request for the current branch
-    - [ ] optionally pass a pr base (remote branch to make the pr against)
-    - [ ] optionally pass a pr title
+    - [x] optionally pass a pr base (remote branch to make the pr against)
+    - [x] optionally pass a pr title
 
 ## Planned
 

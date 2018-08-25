@@ -8,4 +8,4 @@ jira:
     apikey: <your jira api key from id.atlassian.net>
 github:
     owner: <the owner of the repository>
-    apikey: <your github api key>
+    apikey: <your github api key (get this from github.com/settings/tokens)>

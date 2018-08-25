@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ---
 
 ## [Unreleased]
+
+## beta 0.1.0
 - Added the `vor branch` command
 - Added the `vor issues` command
 - Added the `vor issue` command

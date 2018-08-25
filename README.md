@@ -53,41 +53,34 @@ see an example config file [here](https://github.com/trevor-atlas/vor/blob/maste
 The supported configuration options and their defaults are:
 
 ```
-devmode: false // output additional logging information at runtime
+// output additional logging information at runtime
+devmode: false
 
-global.branchtemplate "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}
-branchtemplate: ""
+// the template to use for new branches
+branchtemplate: {jira-issue-number}/{jira-issue-type}/{jira-issue-title}
 
-global.jira.orgname: ""
-jira.orgname: ""
+// the path to your local git
+git:
+    path: /usr/local/bin/git
 
-global.jira.apikey: ""
-jira.apikey: ""
+    // the base branch to make pull requests against
+    pull-request-base: master
 
-global.jira.username: ""
-jira.username: ""
-
-global.github.apikey: ""
-github.apikey: ""
-
-github.owner: ""
-
-global.git.path: "/usr/local/bin/git"
-git.path: ""
-
-global.git.pull-request-base: "master"
-git.pull-request-base: ""
+author: your name
+email: you@yourdomain.xyz
+jira:
+    orgname: <your company name, usually contained in the url or your jira install>
+    username: <your jira username (sometimes an email)>
+    apikey: <your jira api key from id.atlassian.net>
+github:
+    owner: <the owner of the repository>
+    apikey: <your github api key (get this from github.com/settings/tokens)>
+    
 ```
 you can also export the config options in your `bash_profile` or elsewhere like so:
 
 ```
 export JIRA_API_KEY={your jira api key}
-```
-
-Vör also supports global configs for some options:
-these are loaded from your `~` directory or environment variables prefixed with `GLOBAL_`
-```
-export GLOBAL_JIRA_API_KEY=<your jira api key>
 ```
 
 ---
