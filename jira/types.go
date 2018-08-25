@@ -1,7 +1,7 @@
 package jira
 
 import (
-			"time"
+	"time"
 )
 
 // Time represents the Time definition of JIRA as a time.Time of go

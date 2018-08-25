@@ -5,11 +5,11 @@ import (
 )
 
 // PullRequestBody The POST body to create a pull request on github
-type PullRequestBody struct{
+type PullRequestBody struct {
 	Title string `json:"title"`
-	Body string `json:"body"`
-	Head string `json:"head"`
-	Base string `json:"base"`
+	Body  string `json:"body"`
+	Head  string `json:"head"`
+	Base  string `json:"base"`
 }
 
 type PullRequestResponse struct {

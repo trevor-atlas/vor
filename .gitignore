@@ -1,3 +1,4 @@
 .vor
 .idea
-debug.test
+debug*
+vor-*
