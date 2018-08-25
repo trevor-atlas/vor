@@ -36,6 +36,7 @@ install:
 # Remove only what we've created
 clean:
 	find * -name '${BINARY}-[a-zA-Z0-9]*-[a-zA-Z0-9]*' -delete && \
-	rm *.zip && rm *.tar.gz
+	find * -name '${BINARY}-[0-9]*.zip' -delete && \
+	find * -name '${BINARY}-[0-9]*.tar.gz' -delete
 
 .PHONY: check clean install build_all all
