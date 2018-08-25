@@ -28,7 +28,8 @@ zip:
 	$(eval LOCAL_BINARIES := $(shell find * -type f -maxdepth 1 -name "vor-*-*"))
 	@echo $(LOCAL_BINARIES)
 	tar -zcf ${BINARY}-${VERSION}.tar.gz $(LOCAL_BINARIES) README.md LICENSE && \
-	zip -r ${BINARY}-${VERSION}.zip $(LOCAL_BINARIES) README.md LICENSE
+	zip -r ${BINARY}-${VERSION}.zip $(LOCAL_BINARIES) README.md LICENSE && \
+	echo `md5sum ${BINARY}-${VERSION}.zip ${BINARY}-${VERSION}.tar.gz`
 
 install:
 	go install ${LDFLAGS}
