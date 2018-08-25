@@ -11,7 +11,7 @@ import (
 func init() {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.SetDefault("global.git.path", "/usr/local/bin/git")
+	viper.SetDefault("git.path", "/usr/local/bin/git")
 }
 
 func TestNewGit(t *testing.T) {

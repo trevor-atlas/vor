@@ -24,7 +24,7 @@ func TestGetStringEnvExists(t *testing.T) {
 }
 
 func TestGetStringFallsBackToGlobal(t *testing.T) {
-	viper.SetDefault("global.testthing", "this should match")
+	viper.SetDefault("testthing", "this should match")
 	result := viper.GetString("testthing")
 	expected := "this should match"
 	if expected != result {
