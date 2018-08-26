@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/trevor-atlas/vor/jira"
 	"github.com/trevor-atlas/vor/rest"
+	"github.com/trevor-atlas/vor/system"
 	"net/http"
 	"time"
 )
@@ -16,6 +17,9 @@ var issue = &cobra.Command{
 	prints out an issue and its comments
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			system.Exit("Must provide an issue key `vor issue XX-1234`")
+		}
 		get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
 			&http.Client{
 				Transport:     nil,

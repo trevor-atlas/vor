@@ -113,6 +113,9 @@ var branch = &cobra.Command{
 	vor branch XX-4321
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			system.Exit("Must provide an issue key `vor branch XX-1234`")
+		}
 		makeBranch(args)
 	},
 }
