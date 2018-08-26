@@ -8,15 +8,25 @@ func PadOutput(padding int) func(string) string {
 	}
 }
 
+func Capitalize(s string) string {
+	r := strings.NewReplacer(
+		"-", " ",
+		"/", " ",
+		"\n", "",
+		"\t", "")
+	str := r.Replace(s)
+	return strings.ToUpper(string(str[0])) + string(str[1:])
+}
+
 func TitleCase(s string) string {
 	r := strings.NewReplacer(
 		"-", " ",
 		"/", " ",
 		"\n", "",
-		"\t", " ")
+		"\t", "")
 	var result string
 	for _, word := range strings.Split(r.Replace(s), " ") {
-		result += strings.ToUpper(string(word[0])) + string(word[1:])
+		result += strings.ToUpper(string(word[0])) + string(word[1:] + " ")
 	}
 	return result
 }

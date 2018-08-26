@@ -13,10 +13,17 @@ import (
 	"time"
 )
 
+// CheckArgs should be used to ensure the right command line arguments are
+// passed before executing.
+func CheckArgs(got []byte, wanted ...string) {
+	if len(got) < len(wanted)+1 {
+		Exit("Not enough arguments, wanted: " + strings.Join(wanted[:],", "))
+	}
+}
+
 func ExecutionTimer(start time.Time, name string) {
-	log := logger.New()
 	elapsed := time.Since(start)
-	log.Debug("%s took %s", name, elapsed)
+	logger.Debug("%s took %s", name, elapsed)
 }
 
 // Confirm prompt the user with {message} (Y/N) and return true for Y, false for N (case insensitive)
@@ -41,7 +48,6 @@ func Exists(path string) (bool, error) {
 }
 
 func Exec(cmd string) (string, error) {
-	log := logger.New()
 	parts := strings.Fields(cmd)
 	head := parts[0]
 	args := parts[1:]
@@ -51,7 +57,7 @@ func Exec(cmd string) (string, error) {
 
 	out, err := exec.Command(head, args...).Output()
 	if err != nil {
-		log.Error("ERROR: calling exec with '%s':\ncommand failed with %s\n", cmd, err)
+		logger.Error("ERROR: calling exec with '%s':\ncommand failed with %s\n", cmd, err)
 	}
 
 	return string(out), err

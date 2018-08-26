@@ -1,9 +1,15 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/trevor-atlas/vor/env"
+	"github.com/trevor-atlas/vor/rest"
+	"github.com/trevor-atlas/vor/utils"
+	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,7 +19,9 @@ import (
 )
 
 var gc git.GitClient
-var log logger.Logger
+var prMessage string
+var prTitle string
+var prJson bool
 
 func getRemotesMeta() (owner, repo string) {
 	/* remotes will (likely) look like:
@@ -23,7 +31,7 @@ func getRemotesMeta() (owner, repo string) {
 	remotes, _ := gc.Call("remote -v")
 	matcher, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
 	res := matcher.FindAllStringSubmatch(remotes, 1)[0]
-	log.Debug("found matches %s", res)
+	logger.Debug("found matches %s", res)
 	_owner := viper.GetString("github.owner")
 	if owner == "" {
 		owner = res[1]
@@ -34,54 +42,69 @@ func getRemotesMeta() (owner, repo string) {
 }
 
 func pr(args []string) {
-	var prMessage string
-	var prTitle string
 	gc = git.New()
-	log = *logger.New()
-
-	rootCmd.Flags().StringVarP(&prMessage, "message", "m", "Created automagically by Vor", "optional message for pull request description")
-
-	githubAPIKey := viper.GetString("github.apikey")
-	if githubAPIKey == "" {
-		system.Exit("No github API key found in vor config (github.apikey)")
-	}
-	base := viper.GetString("git.pull-request-base")
-	if base == "" {
-		fmt.Println("Repository base not found in config, falling back to origin/master...")
-		base = "master"
-	}
 	owner, repo := getRemotesMeta()
-
 	branch := getLocalBranchName()
-	if branch != "" {
-		rootCmd.Flags().StringVarP(&prTitle, "title", "t", branch, "optional title for pull request (defaults to branch name)")
-	} else {
+	if branch == "" {
 		system.Exit("something went wrong getting the local branch name!")
 	}
+	if prTitle == "" {
+		prTitle = git.GeneratePRName(branch)
+	}
 
-	gpOutput, err := gc.Call("push -u")
-	fmt.Println(gpOutput, err)
+	pushResult, pushErr := gc.Call("push")
 	// If the upstread is not set, do it for us! otherwise panic cause this is weird
-	if err != nil {
+	if pushErr != nil {
 		_, err := gc.Call("push --set-upstream origin " + branch)
 		if err != nil {
 			system.Exit("error calling local git")
 		}
-		// utils.ExitWithMessage("Something went wrong pushing to github:\n" + gpOutput)
+		system.Exit("Something went wrong pushing to github:\n" + pushResult)
 	}
 
-	b, err := json.Marshal(git.PullRequestBody{
+	body, marshalErr := json.Marshal(git.PullRequestBody{
 		Title: prTitle,
 		Body:  prMessage,
 		Head:  owner + ":" + branch,
-		Base:  base,
+		Base:  env.PULL_REQUEST_BASE,
 	})
-	if err != nil {
-		log.Debug("there was a problem unmarshalling the git response %s", err)
+	if marshalErr != nil {
 		system.Exit("There was a problem marshaling the JSON to create the pull request!")
 	}
-	git.Post("https://api.github.com/repos/"+owner+"/"+repo+"/pulls", b)
+	res, resErr := git.Post(
+		rest.NewHTTPClient(&http.Client{Timeout: time.Second * 10}).
+			URL("https://api.github.com/repos/"+owner+"/"+repo+"/pulls").
+			WithHeader("Authorization", "token "+env.GITHUB_APIKEY).
+			WithHeader("Content-Type", "application/json").
+			BODY(bytes.NewBuffer(body)).
+			POST,
+		)
+
+	if resErr != nil {
+		system.Exit("")
+	}
+
+	if res.Errors != nil {
+		logger.Error("Something went wrong creating your pull request")
+		if utils.Contains(res.Message, "No commits between") {
+			system.Exit("Your branch is not changed from the base branch!")
+		}
+		if res.Message == "Validation Failed" {
+			logger.Info("A pull request already exists for this branch")
+			fmt.Println("https://github.com/"+owner+"/"+repo+"/pull/"+branch)
+		} else {
+			res.PrintJSON()
+		}
+		system.Exit("")
+	}
+
+	if prJson {
+		res.PrintJSON()
+	} else {
+		fmt.Printf("Pull request created at: %s\n", res.HTMLURL)
+	}
 }
+
 func getLocalBranchName() string {
 	/*
 		* master
@@ -105,6 +128,8 @@ var pullRequest = &cobra.Command{
 }
 
 func init() {
-
+	pullRequest.Flags().BoolVarP(&prJson, "json", "j", false, "output json response")
+	pullRequest.Flags().StringVarP(&prTitle, "title", "t", "", "optional title for pull request (defaults to branch name)")
+	pullRequest.Flags().StringVarP(&prMessage, "message", "m", "Created automagically by Vor", "optional message for pull request description")
 	rootCmd.AddCommand(pullRequest)
 }

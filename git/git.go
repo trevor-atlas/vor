@@ -43,8 +43,7 @@ func New() GitClient {
 // Client.Call("checkout -b my-branch-name")
 // returns the text output of the command and a standard error (if any)
 func (git GitClient) Call(command string) (string, error) {
-	log := logger.New()
-	log.Debug("calling 'git " + command + "'")
+	logger.Debug("calling 'git " + command + "'")
 	return system.Exec(git.Path + " " + command)
 }
 

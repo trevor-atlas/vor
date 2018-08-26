@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/trevor-atlas/vor/logger"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -60,10 +61,15 @@ func (h *HTTP) POST() ([]byte, error) {
 		return nil, resErr
 	}
 
+	logger.Debug("response Status: %s", response.Status)
+	logger.Debug("response Headers: %s", response.Header)
+
+
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
+	logger.Debug("response Body: %s", string(contents))
 
 	return contents, nil
 }

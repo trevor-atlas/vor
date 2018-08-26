@@ -55,15 +55,13 @@ func generateBranchName(issue jira.JiraIssue) string {
 	}
 
 	branchName := strings.Join(templateParts, "/")
-	log := logger.New()
-	log.Debug("build branch name: " + branchName)
+	logger.Debug("build branch name: " + branchName)
 	return branchName
 }
 
 func createBranch(args []string) (branchName string) {
-	log := logger.New()
 	gc := git.New()
-	log.Debug("cli args: ", args)
+	logger.Debug("cli args: ", args)
 	get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
 		&http.Client{
 			Transport:     nil,
