@@ -3,11 +3,11 @@ package formatters
 import "github.com/fatih/color"
 
 var (
-	CYAN    func(a ...interface{}) string
-	BLUE    func(a ...interface{}) string
-	YELLOW  func(a ...interface{}) string
-	MAGENTA func(a ...interface{}) string
-	RED     func(a ...interface{}) string
+	CYAN    func(format string, a ...interface{}) string
+	BLUE    func(format string, a ...interface{}) string
+	YELLOW  func(format string, a ...interface{}) string
+	MAGENTA func(format string, a ...interface{}) string
+	RED     func(format string, a ...interface{}) string
 )
 
 type StringFormatter interface {
@@ -17,11 +17,11 @@ type StringFormatter interface {
 type DefaultStringFormatter struct{}
 
 func (f *DefaultStringFormatter) Init() {
-	CYAN = color.New(color.FgHiCyan).SprintFunc()
-	BLUE = color.New(color.FgHiBlue).SprintFunc()
-	YELLOW = color.New(color.FgHiYellow).SprintFunc()
-	MAGENTA = color.New(color.FgHiMagenta).SprintFunc()
-	RED = color.New(color.FgHiRed).SprintFunc()
+	CYAN = color.New(color.FgHiCyan).SprintfFunc()
+	BLUE = color.New(color.FgHiBlue).SprintfFunc()
+	YELLOW = color.New(color.FgHiYellow).SprintfFunc()
+	MAGENTA = color.New(color.FgHiMagenta).SprintfFunc()
+	RED = color.New(color.FgHiRed).SprintfFunc()
 }
 
 func Init(formatter StringFormatter) {

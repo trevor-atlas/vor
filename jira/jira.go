@@ -100,7 +100,7 @@ func formatMultiline(message string, formatter func(string) string) string {
 }
 
 func PrintIssueJson(issue JiraIssue) {
-	data, err := json.Marshal(issue)
+	data, err := json.MarshalIndent(issue, "", "    ")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func PrintIssueJson(issue JiraIssue) {
 }
 
 func PrintIssuesJson(issues JiraIssues) {
-	data, err := json.Marshal(issues)
+	data, err := json.MarshalIndent(issues, "", "    ")
 	if err != nil {
 		log.Fatal(err)
 	}

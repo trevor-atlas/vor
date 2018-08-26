@@ -13,7 +13,7 @@ func TitleCase(s string) string {
 		"-", " ",
 		"/", " ",
 		"\n", "",
-		"\t", " ")
+		"\t", "")
 	var result string
 	for _, word := range strings.Split(r.Replace(s), " ") {
 		result += strings.ToUpper(string(word[0])) + string(word[1:])
