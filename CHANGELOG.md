@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ---
 
 ## [Unreleased]
+- fixed a lot of issues with the `pr` command
+- implemented a much better way to handle json un/marshaling
 
 ## beta 0.1.0
 - Added the `vor branch` command
