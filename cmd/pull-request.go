@@ -52,7 +52,7 @@ func pr(args []string) {
 		prTitle = git.GeneratePRName(branch)
 	}
 
-	pushResult, pushErr := gc.Call("push -u")
+	pushResult, pushErr := gc.Call("push")
 	// If the upstread is not set, do it for us! otherwise panic cause this is weird
 	if pushErr != nil {
 		_, err := gc.Call("push --set-upstream origin " + branch)

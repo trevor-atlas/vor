@@ -8,7 +8,7 @@ import (
 )
 
 func GeneratePRName(branchName string) string {
-	return utils.TitleCase(branchName)
+	return utils.Capitalize(branchName)
 }
 
 func Post(post func() ([]byte, error)) (PullRequestResponse, error) {
