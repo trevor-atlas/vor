@@ -2,9 +2,8 @@ package logger
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"github.com/spf13/viper"
-	"sync"
+	"github.com/trevor-atlas/vor/formatters"
 )
 
 type StructuredLogger interface {
@@ -13,43 +12,24 @@ type StructuredLogger interface {
 	Error(format string, rest ...interface{})
 }
 
-type Logger struct {
-	isDev     bool
-	fmtYellow func(a ...interface{}) string
-	fmtRed    func(a ...interface{}) string
-}
-
+type _logger struct {}
 // Ensure Logger implements the StructuredLogger interface
-var _ StructuredLogger = (*Logger)(nil)
+var logger StructuredLogger = &_logger{}
 
-// Use sync to create and return a singleton of the logger
-var once sync.Once
-var logger *Logger
-
-func New() *Logger {
-	once.Do(func() {
-		logger = &Logger{}
-		isDev := viper.GetBool("devmode")
-		logger.isDev = isDev
-		logger.fmtYellow = color.New(color.FgHiYellow).SprintFunc()
-		logger.fmtRed = color.New(color.FgHiRed).SprintFunc()
-	})
-	return logger
-}
-
-func (l *Logger) Info(message string, rest ...interface{}) {
+func Info(message string, rest ...interface{}) { logger.Info(message, rest)}
+func (l *_logger) Info(message string, rest ...interface{}) {
 	fmt.Printf(message, rest...)
-	fmt.Println()
 }
 
-func (l *Logger) Debug(format string, rest ...interface{}) {
-	if l.isDev {
-		fmt.Printf(l.fmtYellow("DEBUG: ")+format, rest...)
-		fmt.Println()
+func Debug(format string, rest ...interface{}) { logger.Debug(format, rest) }
+func (l *_logger) Debug(format string, rest ...interface{}) {
+	devmode := viper.GetBool("devmode")
+	if devmode {
+		fmt.Println(formatters.YELLOW("DEBUG: " + format, rest...))
 	}
 }
 
-func (l *Logger) Error(format string, rest ...interface{}) {
-	fmt.Printf(format, rest...)
-	fmt.Println()
+func Error(format string, rest ...interface{}) { logger.Error(format, rest) }
+func (l *_logger) Error(format string, rest ...interface{}) {
+	fmt.Println(formatters.RED(format, rest...))
 }
