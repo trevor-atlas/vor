@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"github.com/trevor-atlas/vor/utils"
 	"testing"
+	"trevoratlas.com/vor/utils"
 )
 
 func TestKebab(t *testing.T) {

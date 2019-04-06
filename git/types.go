@@ -3,8 +3,9 @@ package git
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/trevor-atlas/vor/system"
 	"time"
+
+	"trevoratlas.com/vor/utils"
 )
 
 // PullRequestBody The POST body to create a pull request on github
@@ -24,7 +25,7 @@ type JSONSerializer interface {
 func (prs *PullRequestResponse) PrintJSON() {
 	jsonString, parseErr := prs.Marshal()
 	if parseErr != nil {
-		system.Exit("error marshalling json")
+		utils.Exit("error marshalling json")
 	}
 	fmt.Printf("%s\n", jsonString)
 }

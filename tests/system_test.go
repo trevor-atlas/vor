@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
+
 	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/system"
 )
 
 const TEST_DATA_PATH = "../test-data/"

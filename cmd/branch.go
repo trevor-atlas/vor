@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"strings"
+	"trevoratlas.com/vor/git"
+	"trevoratlas.com/vor/jira"
 
-	"github.com/trevor-atlas/vor/jira"
-	"github.com/trevor-atlas/vor/logger"
+	"trevoratlas.com/vor/rest"
+
+	"trevoratlas.com/vor/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/git"
-	"github.com/trevor-atlas/vor/rest"
-	"github.com/trevor-atlas/vor/system"
-	"github.com/trevor-atlas/vor/utils"
 	"net/http"
 	"time"
 )
@@ -66,13 +65,13 @@ func generateBranchName(issue jira.JiraIssue) string {
 	}
 
 	branchName := strings.Join(cleanTemplate, "/")
-	logger.Debug("build branch name: " + branchName)
+	utils.Debug("build branch name: " + branchName)
 	return branchName
 }
 
 func createBranch(args []string) (branchName string) {
 	gc := git.New()
-	logger.Debug("cli args: ", args)
+	utils.Debug("cli args: ", args)
 	get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
 		&http.Client{
 			Transport:     nil,
@@ -97,7 +96,7 @@ func createBranch(args []string) (branchName string) {
 		if strings.ToLower(replacer.Replace(branch)) == strings.ToLower(newBranchName) {
 			_, err := gc.Call("checkout " + branch)
 			if err != nil {
-				system.Exit("error calling local git")
+				utils.Exit("error calling local git")
 			}
 			fmt.Println("checked out existing local branch: '" + cyan(branch) + "'")
 			return
@@ -105,7 +104,7 @@ func createBranch(args []string) (branchName string) {
 	}
 	_, err := gc.Call("checkout -b " + newBranchName)
 	if err != nil {
-		system.Exit("error calling local git")
+		utils.Exit("error calling local git")
 	}
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 	return newBranchName
@@ -123,7 +122,7 @@ var branch = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			system.Exit("Must provide an issue key `vor branch XX-1234`")
+			utils.Exit("Must provide an issue key `vor branch XX-1234`")
 		}
 		makeBranch(args)
 	},
@@ -137,7 +136,7 @@ func makeBranch(args []string) {
 
 	if c("deleted") || c("modified") || c("untracked") {
 		if !affirmAll || !declineAll {
-			shouldStash := system.Confirm("Working directory is not clean. Stash changes?")
+			shouldStash := utils.Confirm("Working directory is not clean. Stash changes?")
 			if shouldStash {
 				gc.Stash()
 				didStash = true
@@ -151,7 +150,7 @@ func makeBranch(args []string) {
 	}
 	branch := createBranch(args)
 	if didStash && !affirmAll && !declineAll {
-		affirm := system.Confirm(branch + " created.\nwould you like to re-apply your stashed changes?")
+		affirm := utils.Confirm(branch + " created.\nwould you like to re-apply your stashed changes?")
 		if affirm {
 			gc.UnStash()
 		}

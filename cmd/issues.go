@@ -2,10 +2,10 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/trevor-atlas/vor/jira"
-	"github.com/trevor-atlas/vor/rest"
 	"net/http"
 	"time"
+	"trevoratlas.com/vor/jira"
+	"trevoratlas.com/vor/rest"
 )
 
 var issuesJSON bool

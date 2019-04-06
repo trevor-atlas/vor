@@ -8,6 +8,7 @@ var (
 	YELLOW  func(format string, a ...interface{}) string
 	MAGENTA func(format string, a ...interface{}) string
 	RED     func(format string, a ...interface{}) string
+	GREEN   func(format string, a ...interface{}) string
 )
 
 type StringFormatter interface {
@@ -22,6 +23,7 @@ func (f *DefaultStringFormatter) Init() {
 	YELLOW = color.New(color.FgHiYellow).SprintfFunc()
 	MAGENTA = color.New(color.FgHiMagenta).SprintfFunc()
 	RED = color.New(color.FgHiRed).SprintfFunc()
+	GREEN = color.New(color.FgHiGreen).SprintfFunc()
 }
 
 func Init(formatter StringFormatter) {

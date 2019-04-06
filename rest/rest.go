@@ -1,10 +1,10 @@
 package rest
 
 import (
-	"github.com/trevor-atlas/vor/logger"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"trevoratlas.com/vor/utils"
 )
 
 type RequestBuilder interface {
@@ -61,15 +61,15 @@ func (h *HTTP) POST() ([]byte, error) {
 		return nil, resErr
 	}
 
-	logger.Debug("response Status: %s", response.Status)
-	logger.Debug("response Headers: %s", response.Header)
+	utils.Debug("response Status: %s", response.Status)
+	utils.Debug("response Headers: %s", response.Header)
 
 
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("response Body: %s", string(contents))
+	utils.Debug("response Body: %s", string(contents))
 
 	return contents, nil
 }
