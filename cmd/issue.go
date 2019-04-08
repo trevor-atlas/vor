@@ -18,14 +18,8 @@ var issue = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.CheckArgs(args, "an issue number XX-1234")
-		get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
-			&http.Client{
-				Transport:     nil,
-				CheckRedirect: jira.RedirectHandler,
-				Jar:           nil,
-				Timeout:       time.Second * 10,
-			}))
-		issue := jira.GetIssue(args[0], get)
+		service := jira.Service{}
+		issue := service.GetIssue(args[0])
 
 		if issueJSON {
 			jira.PrintIssueJson(issue)

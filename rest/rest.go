@@ -1,9 +1,11 @@
 package rest
 
 import (
+	"encoding/base64"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 	"trevoratlas.com/vor/utils"
 )
 
@@ -13,6 +15,7 @@ type RequestBuilder interface {
 	URL(url string) RequestBuilder
 	GET() ([]byte, error)
 	POST() ([]byte, error)
+	WithBasicAuth(username, password string) RequestBuilder
 }
 
 type HTTP struct {
@@ -33,9 +36,13 @@ func (h *HTTP) BODY(body io.Reader) RequestBuilder {
 	return h
 }
 
-func NewHTTPClient(client *http.Client) RequestBuilder {
+func New() RequestBuilder {
 	h := new(HTTP)
-	h.Client = client
+	h.Client = &http.Client{
+		Transport: nil,
+		Jar:       nil,
+		Timeout:   time.Second * 10,
+	}
 	h.Headers = make(map[string]string)
 	h.Request, _ = http.NewRequest("", "", nil)
 	return h
@@ -64,7 +71,6 @@ func (h *HTTP) POST() ([]byte, error) {
 	utils.Debug("response Status: %s", response.Status)
 	utils.Debug("response Headers: %s", response.Header)
 
-
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
@@ -80,7 +86,6 @@ func (h *HTTP) GET() ([]byte, error) {
 	if len(h.Headers) != 0 {
 		for k, v := range h.Headers {
 			h.Request.Header.Add(k, v)
-			delete(h.Headers, k)
 		}
 	}
 	resp, reqErr := h.Client.Do(h.Request)
@@ -97,4 +102,20 @@ func (h *HTTP) GET() ([]byte, error) {
 	}
 
 	return contents, nil
+}
+
+func encodeBasicAuth(username, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
+}
+
+func (h *HTTP) WithBasicAuth(username, password string) RequestBuilder {
+	key := encodeBasicAuth(username, password)
+	h.WithHeader("Authorization", "Basic "+key)
+	return h
+}
+
+func (h *HTTP) WithHandler(handler func(req *http.Request, via []*http.Request) error) RequestBuilder {
+	h.Client.CheckRedirect = handler
+	return h
 }

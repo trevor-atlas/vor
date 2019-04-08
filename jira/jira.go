@@ -1,17 +1,14 @@
 package jira
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/dustin/go-humanize"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
 	"trevoratlas.com/vor/formatters"
-	"trevoratlas.com/vor/rest"
 
 	"trevoratlas.com/vor/utils"
 	"unicode/utf8"
@@ -31,25 +28,6 @@ const (
 	right_quote  string = "\u201D"
 	max_len      int    = 70
 )
-
-func InstantiateHttpMethods(builder rest.RequestBuilder) func(url string) ([]byte, error) {
-	builder.
-		WithHeader("Accept", "application/json").
-		WithHeader("Authorization", "Basic "+BasicAuth(utils.JIRA_USERNAME, utils.JIRA_APIKEY))
-	return func(url string) ([]byte, error) {
-		return builder.URL(url).GET()
-	}
-}
-
-func BasicAuth(username, password string) string {
-	auth := username + ":" + password
-	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
-
-func RedirectHandler(req *http.Request, via []*http.Request) error {
-	req.Header.Add("Authorization", "Basic "+BasicAuth(utils.JIRA_USERNAME, utils.JIRA_APIKEY))
-	return nil
-}
 
 func formatMultiline(message string) string {
 	r := strings.NewReplacer(

@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"regexp"
-	"time"
 
 	"trevoratlas.com/vor/git"
 
@@ -72,13 +70,13 @@ func pr(args []string) {
 		utils.Exit("There was a problem marshaling the JSON to create the pull request!")
 	}
 	res, resErr := git.Post(
-		rest.NewHTTPClient(&http.Client{Timeout: time.Second * 10}).
+		rest.New().
 			URL("https://api.github.com/repos/"+owner+"/"+repo+"/pulls").
 			WithHeader("Authorization", "token "+utils.GITHUB_APIKEY).
 			WithHeader("Content-Type", "application/json").
 			BODY(bytes.NewBuffer(body)).
 			POST,
-		)
+	)
 
 	if resErr != nil {
 		utils.Exit("")
@@ -91,7 +89,7 @@ func pr(args []string) {
 		}
 		if res.Message == "Validation Failed" {
 			utils.Info("A pull request already exists for this branch")
-			fmt.Println("https://github.com/"+owner+"/"+repo+"/pull/"+branch)
+			fmt.Println("https://github.com/" + owner + "/" + repo + "/pull/" + branch)
 		} else {
 			res.PrintJSON()
 		}

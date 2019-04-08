@@ -23,11 +23,15 @@ func generateIssueTag(issue jira.JiraIssue) string {
 	priority := utils.LowerKebabCase(issue.Fields.Priority.Name)
 
 	switch issueType {
-		case "bug":
-			if priority == "blocker" { return "blocker" }
-			return "bug"
-		case "story", "task": return "feature"
-		default: return issueType
+	case "bug":
+		if priority == "blocker" {
+			return "blocker"
+		}
+		return "bug"
+	case "story", "task":
+		return "feature"
+	default:
+		return issueType
 	}
 }
 
@@ -41,17 +45,23 @@ func generateBranchName(issue jira.JiraIssue) string {
 	// this is a user error but still confusing
 	for i := range template {
 		switch template[i] {
-		case "{projectname}": template[i] = utils.LowerKebabCase(projectName)
+		case "{projectname}":
+			template[i] = utils.LowerKebabCase(projectName)
 			break
-		case "{jira-issue-number}": template[i] = issue.Key
+		case "{jira-issue-number}":
+			template[i] = issue.Key
 			break
-		case "{jira-issue-type}": template[i] = generateIssueTag(issue)
+		case "{jira-issue-type}":
+			template[i] = generateIssueTag(issue)
 			break
-		case "{jira-issue-title}": template[i] = utils.LowerKebabCase(issue.Fields.Summary)
+		case "{jira-issue-title}":
+			template[i] = utils.LowerKebabCase(issue.Fields.Summary)
 			break
-		case "{date}": template[i] = time.Now().Format("06-01-02")
+		case "{date}":
+			template[i] = time.Now().Format("06-01-02")
 			break
-		case "{author}": template[i] = utils.LowerKebabCase(author)
+		case "{author}":
+			template[i] = utils.LowerKebabCase(author)
 			break
 		}
 	}
@@ -72,14 +82,8 @@ func generateBranchName(issue jira.JiraIssue) string {
 func createBranch(args []string) (branchName string) {
 	gc := git.New()
 	utils.Debug("cli args: ", args)
-	get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
-		&http.Client{
-			Transport:     nil,
-			CheckRedirect: jira.RedirectHandler,
-			Jar:           nil,
-			Timeout:       time.Second * 10,
-		}))
-	issue := jira.GetIssue(args[0], get)
+	jiraService := jira.Service{}
+	issue := jiraService.GetIssue(args[0])
 	newBranchName := generateBranchName(issue)
 	fmt.Println(newBranchName)
 	localBranches, _ := gc.Call("branch")
