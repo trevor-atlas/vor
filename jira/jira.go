@@ -191,35 +191,34 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 	return result, utf8.RuneCountInString(padding + title + padding)
 }
 
-func PrintIssue(issue JiraIssue) string {
-	var b strings.Builder
-	w := b.WriteString
-	wpnl := func(str string) {
-		w(str + "\n")
-	}
-	issueURL := "" + utils.JIRA_ORGNAME + ".atlassian.net/browse/" + issue.Key
+func getIssueURL(issueID string) string {
+	return "https://" + utils.JIRA_ORGNAME + ".atlassian.net/browse/" + issueID
+}
 
+func PrintIssue(issue JiraIssue) string {
 	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
 	assignee := issue.Fields.Assignee.Name
 	if assignee == "" {
 		assignee = "<unassigned>"
 	}
 
-	w(title)
-	wpnl(formatters.CYAN("issue: ") + issue.Key)
-	wpnl(formatters.CYAN("type: ") + issue.Fields.IssueType.Name)
-	wpnl(formatters.CYAN("status: ") + issue.Fields.Status.Name)
-	wpnl(formatters.CYAN("reporter: ") + formatters.MAGENTA(issue.Fields.Reporter.Name))
-	wpnl(formatters.CYAN("assignee: ") + formatters.MAGENTA(assignee))
-	wpnl(formatters.CYAN("created: ") + formatters.YELLOW(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*issue.Fields.Created))) + ")")
-	wpnl(formatters.CYAN("updated: ") + formatters.YELLOW(humanize.Time(time.Time(*issue.Fields.Updated))))
-	wpnl(formatters.CYAN("url: ") + formatters.BLUE(issueURL))
-	if issue.Fields.Description != "" && len(issue.Fields.Description) != 0 {
-		wpnl(formatters.CYAN("description:"))
-		w(formatMultiline(issue.Fields.Description))
-		w("\n")
+	created := time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*issue.Fields.Created)) + ")"
+	updated := humanize.Time(time.Time(*issue.Fields.Updated))
+
+	fmt.PrintLn(title)
+	PrintKeyValue("issue", issue.Key, GenericField)
+	PrintKeyValue("type", issue.Fields.IssueType.Name, GenericField)
+	PrintKeyValue("status", issue.Fields.Status.Name, GenericField)
+	PrintKeyValue("reporter", issue.Fields.Reporter.Name, PersonField)
+	PrintKeyValue("assignee", assignee, PersonField)
+	PrintKeyValue("created", created, DateField)
+	PrintKeyValue("updated", updated, DateField)
+	PrintKeyValue("url", getIssueURL(issue.Key), URLField)
+
+	if issue.Fields.Description != "" {
+		PrintKeyValue("description", formatMultiline(issue.Fields.Description), GenericField)
 	} else {
-		wpnl(formatters.CYAN("description: ") + "none")
+		PrintKeyValue("description", "none")
 	}
 
 	if len(issue.Fields.Comment.Comments) > 0 {

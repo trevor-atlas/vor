@@ -2,10 +2,7 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"net/http"
-	"time"
 	"trevoratlas.com/vor/jira"
-	"trevoratlas.com/vor/rest"
 	"trevoratlas.com/vor/utils"
 )
 

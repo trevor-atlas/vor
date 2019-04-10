@@ -7,13 +7,10 @@ import (
 	"trevoratlas.com/vor/git"
 	"trevoratlas.com/vor/jira"
 
-	"trevoratlas.com/vor/rest"
-
 	"trevoratlas.com/vor/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
 	"time"
 )
 
