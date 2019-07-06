@@ -16,6 +16,11 @@
 # Vör – Jira & Git made simple
 In Norse mythology, Vör is the seeress. She is wise and of searching spirit, so that none can conceal anything from her. Her name means "awareness" or "to become aware of something", and she can be prayed to for intuitive information that cannot be acquired by normal means.
 
+
+## What is it?
+Vor is a CLI tool that makes it really easy to connect jira and git/github
+it provides commands to create branches from a given jira ticket, github pull requests from that branch and makes it easy to view your assigned tickets - all without leaving the command line! 
+
 ## Commands
 **Create a branch for a specific jira issue**
 
