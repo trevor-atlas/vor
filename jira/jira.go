@@ -3,15 +3,17 @@ package jira
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dustin/go-humanize"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
+
 	"trevoratlas.com/vor/formatters"
 
-	"trevoratlas.com/vor/utils"
 	"unicode/utf8"
+
+	"trevoratlas.com/vor/utils"
 
 	"log"
 )
@@ -195,7 +197,7 @@ func getIssueURL(issueID string) string {
 	return "https://" + utils.JIRA_ORGNAME + ".atlassian.net/browse/" + issueID
 }
 
-func PrintIssue(issue JiraIssue) string {
+func PrintIssue(issue JiraIssue) {
 	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
 	assignee := issue.Fields.Assignee.Name
 	if assignee == "" {
@@ -205,7 +207,7 @@ func PrintIssue(issue JiraIssue) string {
 	created := time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*issue.Fields.Created)) + ")"
 	updated := humanize.Time(time.Time(*issue.Fields.Updated))
 
-	fmt.PrintLn(title)
+	fmt.Println(title)
 	PrintKeyValue("issue", issue.Key, GenericField)
 	PrintKeyValue("type", issue.Fields.IssueType.Name, GenericField)
 	PrintKeyValue("status", issue.Fields.Status.Name, GenericField)
@@ -218,24 +220,21 @@ func PrintIssue(issue JiraIssue) string {
 	if issue.Fields.Description != "" {
 		PrintKeyValue("description", formatMultiline(issue.Fields.Description), GenericField)
 	} else {
-		PrintKeyValue("description", "none")
+		PrintKeyValue("description", "none", GenericField)
 	}
 
 	if len(issue.Fields.Comment.Comments) > 0 {
 		nestedPad := utils.PadOutput(4)
-		wpnl(formatters.CYAN("comments:"))
+		fmt.Println(formatters.CYAN("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
-			w(nestedPad(formatters.CYAN("author: ") + comment.Author.Name + "\n"))
-			w(nestedPad(formatters.CYAN("created: ") + formatters.YELLOW(time.Time(*comment.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*comment.Created))+")\n")))
-			w(nestedPad(formatters.CYAN("updated: ")+formatters.YELLOW(humanize.Time(time.Time(*comment.Updated)))) + "\n")
-			w(nestedPad(formatters.CYAN("body:\n")))
-			w(formatters.GREEN(formatMultiline(comment.Body)) + "\n\n")
+			commentCreated := time.Time(*comment.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*comment.Created)) + ")\n"
+			commentUpdated := humanize.Time(time.Time(*comment.Updated))
+			PrintKeyValue(nestedPad("author"), comment.Author.Name, PersonField)
+			PrintKeyValue(nestedPad("created"), commentCreated, DateField)
+			PrintKeyValue(nestedPad("updated"), commentUpdated, DateField)
+			PrintKeyValue(nestedPad("body"), comment.Body, GenericField)
 		}
 	}
-
-	result := b.String()
-	fmt.Println(result)
-	return result
 }
 
 func GetIssues(get func(url string) ([]byte, error)) JiraIssues {
