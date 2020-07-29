@@ -3,9 +3,9 @@ package tests
 import (
 	"strings"
 	"testing"
+	"trevoratlas.com/vor/git"
 
 	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/git"
 )
 
 func init() {

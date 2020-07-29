@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/trevor-atlas/vor/env"
-	"github.com/trevor-atlas/vor/rest"
-	"github.com/trevor-atlas/vor/utils"
-	"net/http"
 	"regexp"
-	"time"
+
+	"trevoratlas.com/vor/git"
+
+	"trevoratlas.com/vor/rest"
+
+	"trevoratlas.com/vor/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/git"
-	"github.com/trevor-atlas/vor/logger"
-	"github.com/trevor-atlas/vor/system"
 )
 
 var gc git.GitClient
@@ -31,7 +29,7 @@ func getRemotesMeta() (owner, repo string) {
 	remotes, _ := gc.Call("remote -v")
 	matcher, _ := regexp.Compile(`github.com\/(.*)\/(.*)\.git`)
 	res := matcher.FindAllStringSubmatch(remotes, 1)[0]
-	logger.Debug("found matches %s", res)
+	utils.Debug("found matches %s", res)
 	_owner := viper.GetString("github.owner")
 	if owner == "" {
 		owner = res[1]
@@ -46,7 +44,7 @@ func pr(args []string) {
 	owner, repo := getRemotesMeta()
 	branch := getLocalBranchName()
 	if branch == "" {
-		system.Exit("something went wrong getting the local branch name!")
+		utils.Exit("something went wrong getting the local branch name!")
 	}
 	if prTitle == "" {
 		prTitle = git.GeneratePRName(branch)
@@ -57,45 +55,45 @@ func pr(args []string) {
 	if pushErr != nil {
 		_, err := gc.Call("push --set-upstream origin " + branch)
 		if err != nil {
-			system.Exit("error calling local git")
+			utils.Exit("error calling local git")
 		}
-		system.Exit("Something went wrong pushing to github:\n" + pushResult)
+		utils.Exit("Something went wrong pushing to github:\n" + pushResult)
 	}
 
 	body, marshalErr := json.Marshal(git.PullRequestBody{
 		Title: prTitle,
 		Body:  prMessage,
 		Head:  owner + ":" + branch,
-		Base:  env.PULL_REQUEST_BASE,
+		Base:  utils.PULL_REQUEST_BASE,
 	})
 	if marshalErr != nil {
-		system.Exit("There was a problem marshaling the JSON to create the pull request!")
+		utils.Exit("There was a problem marshaling the JSON to create the pull request!")
 	}
 	res, resErr := git.Post(
-		rest.NewHTTPClient(&http.Client{Timeout: time.Second * 10}).
+		rest.New().
 			URL("https://api.github.com/repos/"+owner+"/"+repo+"/pulls").
-			WithHeader("Authorization", "token "+env.GITHUB_APIKEY).
+			WithHeader("Authorization", "token "+utils.GITHUB_APIKEY).
 			WithHeader("Content-Type", "application/json").
 			BODY(bytes.NewBuffer(body)).
 			POST,
-		)
+	)
 
 	if resErr != nil {
-		system.Exit("")
+		utils.Exit("")
 	}
 
 	if res.Errors != nil {
-		logger.Error("Something went wrong creating your pull request")
+		utils.Error("Something went wrong creating your pull request")
 		if utils.Contains(res.Message, "No commits between") {
-			system.Exit("Your branch is not changed from the base branch!")
+			utils.Exit("Your branch is not changed from the base branch!")
 		}
 		if res.Message == "Validation Failed" {
-			logger.Info("A pull request already exists for this branch")
-			fmt.Println("https://github.com/"+owner+"/"+repo+"/pull/"+branch)
+			utils.Info("A pull request already exists for this branch")
+			fmt.Println("https://github.com/" + owner + "/" + repo + "/pull/" + branch)
 		} else {
 			res.PrintJSON()
 		}
-		system.Exit("")
+		utils.Exit("")
 	}
 
 	if prJson {

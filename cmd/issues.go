@@ -2,10 +2,8 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/trevor-atlas/vor/jira"
-	"github.com/trevor-atlas/vor/rest"
-	"net/http"
-	"time"
+
+	"trevoratlas.com/vor/jira"
 )
 
 var issuesJSON bool
@@ -16,14 +14,9 @@ var issues = &cobra.Command{
 	List each of your assigned issues in jira
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
-			&http.Client{
-				Transport:     nil,
-				CheckRedirect: jira.RedirectHandler,
-				Jar:           nil,
-				Timeout:       time.Second * 10,
-			}))
-		issues := jira.GetIssues(get)
+		service := jira.Service{}
+		issues := service.GetIssues()
+
 		if issuesJSON {
 			jira.PrintIssuesJson(issues)
 		} else {

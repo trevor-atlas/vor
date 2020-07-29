@@ -4,72 +4,83 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"strings"
+	"trevoratlas.com/vor/git"
+	"trevoratlas.com/vor/jira"
 
-	"github.com/trevor-atlas/vor/jira"
-	"github.com/trevor-atlas/vor/logger"
+	"trevoratlas.com/vor/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/trevor-atlas/vor/git"
-	"github.com/trevor-atlas/vor/rest"
-	"github.com/trevor-atlas/vor/system"
-	"github.com/trevor-atlas/vor/utils"
-	"net/http"
 	"time"
 )
 
+// TODO: this should be generic per issue provider
 func generateIssueTag(issue jira.JiraIssue) string {
-	switch issue.Fields.IssueType.Name {
+	issueType := utils.LowerKebabCase(issue.Fields.IssueType.Name)
+	priority := utils.LowerKebabCase(issue.Fields.Priority.Name)
+
+	switch issueType {
 	case "bug":
-		if issue.Fields.Priority.Name == "blocker" {
+		if priority == "blocker" {
 			return "blocker"
 		}
 		return "bug"
 	case "story", "task":
 		return "feature"
 	default:
-		return "feature"
+		return issueType
 	}
 }
 
 func generateBranchName(issue jira.JiraIssue) string {
-	branchTemplate := viper.GetString("branchtemplate")
+	branchTemplate := viper.GetString("git.branchtemplate")
 	projectName := viper.GetString("projectname")
-	templateParts := strings.Split(branchTemplate, "/")
+	author := viper.GetString("author")
+	template := strings.Split(branchTemplate, "/")
 
-	for i := range templateParts {
-		switch templateParts[i] {
+	// TODO add output to logger if an entry is empty
+	// this is a user error but still confusing
+	for i := range template {
+		switch template[i] {
 		case "{projectname}":
-			templateParts[i] = projectName
+			template[i] = utils.LowerKebabCase(projectName)
 			break
 		case "{jira-issue-number}":
-			templateParts[i] = issue.Key
+			template[i] = issue.Key
 			break
 		case "{jira-issue-type}":
-			templateParts[i] = generateIssueTag(issue)
+			template[i] = generateIssueTag(issue)
 			break
 		case "{jira-issue-title}":
-			templateParts[i] = utils.LowerKebabCase(issue.Fields.Summary)
+			template[i] = utils.LowerKebabCase(issue.Fields.Summary)
+			break
+		case "{date}":
+			template[i] = time.Now().Format("06-01-02")
+			break
+		case "{author}":
+			template[i] = utils.LowerKebabCase(author)
 			break
 		}
 	}
 
-	branchName := strings.Join(templateParts, "/")
-	logger.Debug("build branch name: " + branchName)
+	// remove empty entries
+	var cleanTemplate []string
+	for _, item := range template {
+		if item != "" {
+			cleanTemplate = append(cleanTemplate, item)
+		}
+	}
+
+	branchName := strings.Join(cleanTemplate, "/")
+	utils.Debug("build branch name: " + branchName)
 	return branchName
 }
 
 func createBranch(args []string) (branchName string) {
 	gc := git.New()
-	logger.Debug("cli args: ", args)
-	get := jira.InstantiateHttpMethods(rest.NewHTTPClient(
-		&http.Client{
-			Transport:     nil,
-			CheckRedirect: jira.RedirectHandler,
-			Jar:           nil,
-			Timeout:       time.Second * 10,
-		}))
-	issue := jira.GetIssue(args[0], get)
+	utils.Debug("cli args: ", args)
+	jiraService := jira.Service{}
+	issue := jiraService.GetIssue(args[0])
 	newBranchName := generateBranchName(issue)
 	fmt.Println(newBranchName)
 	localBranches, _ := gc.Call("branch")
@@ -86,7 +97,7 @@ func createBranch(args []string) (branchName string) {
 		if strings.ToLower(replacer.Replace(branch)) == strings.ToLower(newBranchName) {
 			_, err := gc.Call("checkout " + branch)
 			if err != nil {
-				system.Exit("error calling local git")
+				utils.Exit("error calling local git")
 			}
 			fmt.Println("checked out existing local branch: '" + cyan(branch) + "'")
 			return
@@ -94,7 +105,7 @@ func createBranch(args []string) (branchName string) {
 	}
 	_, err := gc.Call("checkout -b " + newBranchName)
 	if err != nil {
-		system.Exit("error calling local git")
+		utils.Exit("error calling local git")
 	}
 	fmt.Println("checked out new local branch: '" + cyan(newBranchName) + "'")
 	return newBranchName
@@ -112,7 +123,7 @@ var branch = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			system.Exit("Must provide an issue key `vor branch XX-1234`")
+			utils.Exit("Must provide an issue key `vor branch XX-1234`")
 		}
 		makeBranch(args)
 	},
@@ -126,7 +137,7 @@ func makeBranch(args []string) {
 
 	if c("deleted") || c("modified") || c("untracked") {
 		if !affirmAll || !declineAll {
-			shouldStash := system.Confirm("Working directory is not clean. Stash changes?")
+			shouldStash := utils.Confirm("Working directory is not clean. Stash changes?")
 			if shouldStash {
 				gc.Stash()
 				didStash = true
@@ -140,7 +151,7 @@ func makeBranch(args []string) {
 	}
 	branch := createBranch(args)
 	if didStash && !affirmAll && !declineAll {
-		affirm := system.Confirm(branch + " created.\nwould you like to re-apply your stashed changes?")
+		affirm := utils.Confirm(branch + " created.\nwould you like to re-apply your stashed changes?")
 		if affirm {
 			gc.UnStash()
 		}

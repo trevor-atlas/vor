@@ -1,7 +1,7 @@
 package main
 
 import (
-	cmd "github.com/trevor-atlas/vor/cmd"
+	cmd "trevoratlas.com/vor/cmd"
 )
 
 func main() {

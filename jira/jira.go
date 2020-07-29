@@ -3,21 +3,18 @@ package jira
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
+	"regexp"
 	"strings"
-	"text/tabwriter"
 	"time"
-	"unicode/utf8"
 
-	"encoding/base64"
 	"github.com/dustin/go-humanize"
 
-	"github.com/trevor-atlas/vor/env"
-	"github.com/trevor-atlas/vor/formatters"
-	"github.com/trevor-atlas/vor/rest"
-	"github.com/trevor-atlas/vor/system"
-	"github.com/trevor-atlas/vor/utils"
+	"trevoratlas.com/vor/formatters"
+
+	"unicode/utf8"
+
+	"trevoratlas.com/vor/utils"
+
 	"log"
 )
 
@@ -34,69 +31,38 @@ const (
 	max_len      int    = 70
 )
 
-func InstantiateHttpMethods(builder rest.RequestBuilder) func(url string) ([]byte, error) {
-	builder.
-		WithHeader("Accept", "application/json").
-		WithHeader("Authorization", "Basic "+BasicAuth(env.JIRA_USERNAME, env.JIRA_APIKEY))
-	return func(url string) ([]byte, error) {
-		return builder.URL(url).GET()
-	}
-}
+func formatMultiline(message string) string {
+	r := strings.NewReplacer(
+		"\\{", "{",
+		"\\}", "}",
+		"\\-", "-",
+		"\\!", "!")
+	message = r.Replace(message)
 
-func BasicAuth(username, password string) string {
-	auth := username + ":" + password
-	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
+	inlineCode := regexp.MustCompile(`{{([a-zA-Z.\-_$@#%^&*()=+\s~/\\]*)}}$`)
 
-func RedirectHandler(req *http.Request, via []*http.Request) error {
-	req.Header.Add("Authorization", "Basic "+BasicAuth(env.JIRA_USERNAME, env.JIRA_APIKEY))
-	return nil
-}
+	split := strings.SplitAfter(message, "}}")
 
-func formatMultiline(message string, formatter func(string) string) string {
-	var b strings.Builder
-	// write to the string builder
-	w := func(str string) {
-		b.WriteString(formatter(str))
-	}
-	// write to the string builder with a new line
-	wnl := func(str string) {
-		b.WriteString(formatter(str) + "\n")
-	}
-
-	for _, line := range strings.Split(message, "\n") {
-		if utf8.RuneCountInString(line) > max_len {
-			if strings.Contains(line, "{code}") {
-				w("```")
-				for _, str := range strings.Split(line, "{code}") {
-					str_len := utf8.RuneCountInString(str)
-					if str_len > max_len {
-						if str_len/2 > max_len {
-							wnl(str[0 : str_len/3])
-							wnl(" " + str[str_len/3:(str_len/3)*2])
-							w(" " + str[(str_len/3)*2:])
-						} else {
-							wnl(str[0 : str_len/2])
-							wnl(" " + str[str_len/2:])
-						}
-					} else {
-						wnl(str)
-					}
-				}
-				w("```")
-			} else if strings.Contains(line, ". ") {
-				for _, str := range strings.SplitAfter(line, ". ") {
-					wnl(str)
-				}
-			} else {
-				wnl(line[0 : max_len-4])
-				wnl(" " + line[max_len-4:])
-			}
-		} else {
-			wnl(line)
+	for i, str := range split {
+		if utils.Contains(str, "}}") || utils.Contains(str, "{{") {
+			s := inlineCode.ReplaceAllString(str, formatCode(`$1`))
+			split[i] = s
 		}
 	}
-	return strings.Trim(b.String(), "\n")
+
+	message = strings.Join(split, "")
+
+	split = strings.SplitAfter(message, "{code}")
+
+	for i, str := range split {
+		if utils.Contains(str, "{code}") {
+			split[i] = formatCode(str)
+		}
+	}
+
+	message = strings.Join(split, "")
+
+	return message
 }
 
 func PrintIssueJson(issue JiraIssue) {
@@ -115,53 +81,71 @@ func PrintIssuesJson(issues JiraIssues) {
 	fmt.Printf("%s\n", data)
 }
 
+type GroupedIssues map[string][]JiraIssue
+
+type FieldType int
+
+const (
+	DateField FieldType = iota
+	PersonField
+	URLField
+	GenericField
+)
+
+func PrintKeyValue(key string, value string, t FieldType) {
+	key = formatters.CYAN(strings.ToLower(key)) + ": "
+	switch t {
+	case DateField:
+		fmt.Print(key + formatters.YELLOW(value) + "\n")
+	case PersonField:
+		fmt.Print(key + formatters.MAGENTA(value) + "\n")
+	case URLField:
+		fmt.Print(key + formatters.BLUE(value) + "\n")
+	case GenericField:
+		fmt.Print(key + value + "\n")
+	}
+}
+
+func formatCode(s string) string {
+	return "\033[30;5;47m" + s + "\033[0m"
+}
+
 func PrintIssues(issues JiraIssues) {
 	divider := "\n--------------------------------\n"
-	issueURL := "" + env.JIRA_ORGNAME + ".atlassian.net/browse/"
-	toDo := []JiraIssue{}
-	inProg := []JiraIssue{}
-	review := []JiraIssue{}
-	verify := []JiraIssue{}
+	issueURL := "" + utils.JIRA_ORGNAME + ".atlassian.net/browse/"
+	grouped := make(GroupedIssues)
 
 	for _, issue := range issues.Issues {
 		if issue.Fields.IssueType.Name == "Sub-task" {
 			continue
 		}
-		switch issue.Fields.Status.Name {
-		case "To Do":
-			toDo = append(toDo, issue)
-		case "In Progress":
-			inProg = append(inProg, issue)
-		case "Review":
-			review = append(review, issue)
-		case "Verification":
-			verify = append(verify, issue)
-		default:
+		if issue.Fields.IssueType.Name == "Epic" {
 			continue
 		}
+		if issue.Fields.Status.StatusCategory.Name == "Done" {
+			continue
+		}
+		grouped[issue.Fields.Status.Name] = append(grouped[issue.Fields.Status.Name], issue)
 	}
 
-	columns := [][]JiraIssue{toDo, inProg, review, verify}
-	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 12, 8, 2, '\t', ' ')
-
-	for _, column := range columns {
-		if column == nil || len(column) < 1 {
+	for _, value := range grouped {
+		if value == nil || len(value) < 1 {
 			continue
 		}
-		fmt.Println()
-		fmt.Print(formatters.CYAN(column[0].Fields.Status.StatusCategory.Name))
-		fmt.Println(divider)
-		fmt.Fprintln(w, formatters.CYAN("Issue No.")+"\t "+formatters.CYAN("Issue Type")+"\t "+formatters.CYAN("URL"))
-		fmt.Fprintln(w)
-		for _, issue := range column {
-			fmt.Fprintln(w,
-				issue.Key+"\t "+
-					issue.Fields.IssueType.Name+"\t "+
-					issueURL+issue.Key)
-			fmt.Fprintln(w)
+		for _, issue := range value {
+			created := time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*issue.Fields.Created)) + ")"
+			updated := humanize.Time(time.Time(*issue.Fields.Updated))
+
+			fmt.Println()
+			fmt.Println(issue.Key + "/" + issue.Fields.IssueType.Name + "/" + issue.Fields.Summary)
+			PrintKeyValue("assignee", issue.Fields.Assignee.DisplayName, PersonField)
+			PrintKeyValue("reporter", issue.Fields.Reporter.DisplayName, PersonField)
+			PrintKeyValue("created", created, DateField)
+			PrintKeyValue("updated", updated, DateField)
+			PrintKeyValue("status", issue.Fields.Status.StatusCategory.Name, GenericField)
+			PrintKeyValue("URL", issueURL+issue.Key, URLField)
+			fmt.Println(divider)
 		}
-		w.Flush()
 	}
 }
 
@@ -197,71 +181,72 @@ func BuildTitle(title string, maxPadding int) (formattedTitle string, length int
 	return result, utf8.RuneCountInString(padding + title + padding)
 }
 
-func PrintIssue(issue JiraIssue) string {
-	var b strings.Builder
-	w := b.WriteString
-	pad := utils.PadOutput(2)
-	wpnl := func(str string) {
-		w(pad(str) + "\n")
-	}
-	issueURL := "" + env.JIRA_ORGNAME + ".atlassian.net/browse/" + issue.Key
+func getIssueURL(issueID string) string {
+	return "https://" + utils.JIRA_ORGNAME + ".atlassian.net/browse/" + issueID
+}
 
+func PrintIssue(issue JiraIssue) {
+	fmt.Println("made it here")
 	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
-	assignee := issue.Fields.Assignee.Name
+	assignee := issue.Fields.Assignee.DisplayName
 	if assignee == "" {
 		assignee = "<unassigned>"
 	}
 
-	w(title)
-	wpnl(formatters.CYAN("issue: ") + issue.Key)
-	wpnl(formatters.CYAN("type: ") + issue.Fields.IssueType.Name)
-	wpnl(formatters.CYAN("status: ") + issue.Fields.Status.Name)
-	wpnl(formatters.CYAN("reporter: ") + formatters.MAGENTA(issue.Fields.Reporter.Name))
-	wpnl(formatters.CYAN("assignee: ") + formatters.MAGENTA(assignee))
-	wpnl(formatters.CYAN("created: ") + formatters.YELLOW(time.Time(*issue.Fields.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*issue.Fields.Created))) + ")")
-	wpnl(formatters.CYAN("updated: ") + formatters.YELLOW(humanize.Time(time.Time(*issue.Fields.Updated))))
-	wpnl(formatters.CYAN("url: ") + formatters.BLUE(issueURL))
-	wpnl(formatters.CYAN("description:"))
-	w(formatMultiline(issue.Fields.Description, utils.PadOutput(4)) + "\n\n")
+	created := time.Time(*issue.Fields.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*issue.Fields.Created)) + ")"
+	updated := humanize.Time(time.Time(*issue.Fields.Updated))
+
+	fmt.Println(title)
+	PrintKeyValue("issue", issue.Key, GenericField)
+	PrintKeyValue("type", issue.Fields.IssueType.Name, GenericField)
+	PrintKeyValue("status", issue.Fields.Status.Name, GenericField)
+	PrintKeyValue("reporter", issue.Fields.Reporter.DisplayName, PersonField)
+	PrintKeyValue("assignee", assignee, PersonField)
+	PrintKeyValue("created", created, DateField)
+	PrintKeyValue("updated", updated, DateField)
+	PrintKeyValue("url", getIssueURL(issue.Key), URLField)
+
+	if issue.Fields.Description != "" {
+		PrintKeyValue("description", formatMultiline(issue.Fields.Description), GenericField)
+	} else {
+		PrintKeyValue("description", "none", GenericField)
+	}
 
 	if len(issue.Fields.Comment.Comments) > 0 {
 		nestedPad := utils.PadOutput(4)
-		wpnl(formatters.CYAN("comments:"))
+		fmt.Println(formatters.CYAN("comments:"))
 		for _, comment := range issue.Fields.Comment.Comments {
-			w(nestedPad(formatters.CYAN("author: ") + comment.Author.Name + "\n"))
-			w(nestedPad(formatters.CYAN("created: ") + formatters.YELLOW(time.Time(*comment.Created).Format("2006-01-02 15:04")+" ("+humanize.Time(time.Time(*comment.Created))+")\n")))
-			w(nestedPad(formatters.CYAN("updated: ")+formatters.YELLOW(humanize.Time(time.Time(*comment.Updated)))) + "\n")
-			w(nestedPad(formatters.CYAN("body:\n")))
-			w(formatMultiline(comment.Body, utils.PadOutput(6)) + "\n\n")
+			commentCreated := time.Time(*comment.Created).Format("2006-01-02 15:04") + " (" + humanize.Time(time.Time(*comment.Created)) + ")\n"
+			commentUpdated := humanize.Time(time.Time(*comment.Updated))
+			PrintKeyValue(nestedPad("author"), comment.Author.Name, PersonField)
+			PrintKeyValue(nestedPad("created"), commentCreated, DateField)
+			PrintKeyValue(nestedPad("updated"), commentUpdated, DateField)
+			PrintKeyValue(nestedPad("body"), comment.Body, GenericField)
 		}
 	}
-
-	result := b.String()
-	fmt.Println(result)
-	return result
 }
 
 func GetIssues(get func(url string) ([]byte, error)) JiraIssues {
-	defer system.ExecutionTimer(time.Now(), "GetIssues")
-	url := "https://" + env.JIRA_ORGNAME + ".atlassian.net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
+	url := "https://" + utils.JIRA_ORGNAME + ".atlassian." +
+		"net/rest/api/2/search?jql=assignee=currentuser()+order+by+status+asc&expand=fields"
 
 	body, err := get(url)
 	if err != nil {
-		system.Exit("There was a problem making the request to the jira API in `GetIssues`")
+		utils.Exit("There was a problem making the request to the jira API in `GetIssues`")
 	}
 
 	parsed := JiraIssues{}
 	parseError := json.Unmarshal(body, &parsed)
 	if parseError != nil {
 		fmt.Printf("There was a problem parsing the jira API response:\n%s\n", parseError)
-		system.Exit("")
+		utils.Exit("")
 	}
 	return parsed
 }
 
 func GetIssue(issueNumber string, get func(url string) ([]byte, error)) JiraIssue {
-	defer system.ExecutionTimer(time.Now(), "GetIssue")
-	url := "https://" + env.JIRA_ORGNAME + ".atlassian.net/rest/api/2/issue/" + issueNumber + "?expand=fields"
+	url := "https://" + utils.JIRA_ORGNAME + ".atlassian." +
+		"net/rest/api/2/issue/" + issueNumber + "?expand=fields"
 
 	res, err := get(url)
 	if err != nil {
