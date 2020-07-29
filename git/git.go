@@ -2,6 +2,7 @@ package git
 
 import (
 	"sync"
+
 	"trevoratlas.com/vor/utils"
 
 	"github.com/spf13/viper"

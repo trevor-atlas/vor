@@ -18,12 +18,12 @@ var issue = &cobra.Command{
 		service := jira.Service{}
 		issue := service.GetIssue(args[0])
 
-		if issueJSON {
-			jira.PrintIssueJson(issue)
-		} else {
+		// if issueJSON {
+		// 	jira.PrintIssueJson(issue)
+		// } else {
 			jira.PrintIssue(issue)
 
-		}
+		// }
 	},
 }
 

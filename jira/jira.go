@@ -125,20 +125,7 @@ func PrintIssues(issues JiraIssues) {
 		if issue.Fields.Status.StatusCategory.Name == "Done" {
 			continue
 		}
-		switch issue.Fields.Status.Name {
-		case "To Do":
-			grouped["To Do"] = append(grouped["To Do"], issue)
-		case "In Progress":
-			grouped["In Progress"] = append(grouped["In Progress"], issue)
-		case "Review":
-			grouped["Review"] = append(grouped["Review"], issue)
-		case "Verification":
-			grouped["Verification"] = append(grouped["Verification"], issue)
-		case "Ready For Release":
-			grouped["Ready For Release"] = append(grouped["Ready For Release"], issue)
-		default:
-			continue
-		}
+		grouped[issue.Fields.Status.Name] = append(grouped[issue.Fields.Status.Name], issue)
 	}
 
 	for _, value := range grouped {
@@ -151,7 +138,8 @@ func PrintIssues(issues JiraIssues) {
 
 			fmt.Println()
 			fmt.Println(issue.Key + "/" + issue.Fields.IssueType.Name + "/" + issue.Fields.Summary)
-			PrintKeyValue("assignee", issue.Fields.Assignee.Name, PersonField)
+			PrintKeyValue("assignee", issue.Fields.Assignee.DisplayName, PersonField)
+			PrintKeyValue("reporter", issue.Fields.Reporter.DisplayName, PersonField)
 			PrintKeyValue("created", created, DateField)
 			PrintKeyValue("updated", updated, DateField)
 			PrintKeyValue("status", issue.Fields.Status.StatusCategory.Name, GenericField)
@@ -198,8 +186,9 @@ func getIssueURL(issueID string) string {
 }
 
 func PrintIssue(issue JiraIssue) {
+	fmt.Println("made it here")
 	title, _ := BuildTitle(left_quote+issue.Fields.Summary+right_quote, 10)
-	assignee := issue.Fields.Assignee.Name
+	assignee := issue.Fields.Assignee.DisplayName
 	if assignee == "" {
 		assignee = "<unassigned>"
 	}
@@ -211,7 +200,7 @@ func PrintIssue(issue JiraIssue) {
 	PrintKeyValue("issue", issue.Key, GenericField)
 	PrintKeyValue("type", issue.Fields.IssueType.Name, GenericField)
 	PrintKeyValue("status", issue.Fields.Status.Name, GenericField)
-	PrintKeyValue("reporter", issue.Fields.Reporter.Name, PersonField)
+	PrintKeyValue("reporter", issue.Fields.Reporter.DisplayName, PersonField)
 	PrintKeyValue("assignee", assignee, PersonField)
 	PrintKeyValue("created", created, DateField)
 	PrintKeyValue("updated", updated, DateField)

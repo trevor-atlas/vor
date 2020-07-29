@@ -2,15 +2,15 @@ package commands
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"trevoratlas.com/vor/formatters"
+	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
+	"trevoratlas.com/vor/formatters"
 
 	"trevoratlas.com/vor/utils"
 )
@@ -56,7 +56,9 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		utils.Init(&utils.DefaultLoader{})
 	},
+	Run: func(cmd *cobra.Command, args []string){},
 }
+
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {

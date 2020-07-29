@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
+
 	"trevoratlas.com/vor/jira"
 )
 
